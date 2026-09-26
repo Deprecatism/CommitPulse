@@ -12,22 +12,35 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.websockets import WebSocketDisconnect
 
 if __package__:
+    from .docker_monitor import DockerMetricsMonitor
+    from .github_actions import router as github_router
     from .live_updates import LiveUpdateHub
     from .metrics_store import MetricsStore, SystemMetricsReport
     from .performance_monitor import SystemMetricsMonitor
 else:
+    from docker_monitor import DockerMetricsMonitor
+    from github_actions import router as github_router
     from live_updates import LiveUpdateHub
     from metrics_store import MetricsStore, SystemMetricsReport
     from performance_monitor import SystemMetricsMonitor
+
+
+def _env_flag(name: str, default: str) -> bool:
+    value = os.getenv(name, default).strip().lower()
+    if value not in {"1", "true", "yes", "on", "0", "false", "no", "off"}:
+        raise ValueError(f"{name} must be a boolean value")
+    return value in {"1", "true", "yes", "on"}
 
 metrics_store = MetricsStore(
     database_path=os.getenv("METRICS_DB_PATH"),
 )
 metrics_interval_seconds = float(os.getenv("METRICS_INTERVAL_SECONDS", "5"))
-metrics_polling_setting = os.getenv("METRICS_POLLING_ENABLED", "true").strip().lower()
-if metrics_polling_setting not in {"1", "true", "yes", "on", "0", "false", "no", "off"}:
-    raise ValueError("METRICS_POLLING_ENABLED must be a boolean value")
-metrics_polling_enabled = metrics_polling_setting in {"1", "true", "yes", "on"}
+metrics_polling_enabled = _env_flag("METRICS_POLLING_ENABLED", "true")
+docker_monitoring_enabled = _env_flag("DOCKER_MONITORING_ENABLED", "true")
+docker_interval_seconds = float(
+    os.getenv("DOCKER_INTERVAL_SECONDS", str(metrics_interval_seconds))
+)
+docker_collect_disk_usage = _env_flag("DOCKER_COLLECT_DISK_USAGE", "false")
 webhook_secret = os.getenv("METRICS_WEBHOOK_SECRET")
 live_updates = LiveUpdateHub()
 
@@ -101,6 +114,13 @@ metrics_monitor = SystemMetricsMonitor(
     repository_name=current_repository_name(),
 )
 
+docker_monitor = DockerMetricsMonitor(
+    metrics_store,
+    interval_seconds=docker_interval_seconds,
+    on_sample=broadcast_local_sample,
+    collect_disk_usage=docker_collect_disk_usage,
+)
+
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
@@ -108,11 +128,15 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
     metrics_store.initialize()
     if metrics_polling_enabled:
         metrics_monitor.start()
+    if docker_monitoring_enabled:
+        docker_monitor.start()
     try:
         yield
     finally:
         if metrics_polling_enabled:
             metrics_monitor.stop()
+        if docker_monitoring_enabled:
+            docker_monitor.stop()
 
 
 app = FastAPI(title="CommitPulse API", version="1.0.0", lifespan=lifespan)
@@ -132,6 +156,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(github_router)
 
 
 @app.get("/api/health")
@@ -185,7 +211,7 @@ def metrics_history(
         Path(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$"),
     ],
     limit: Annotated[int, Query(ge=1, le=1000)] = 100,
-    source: Annotated[Literal["local", "reported"] | None, Query()] = None,
+    source: Annotated[Literal["local", "reported", "docker"] | None, Query()] = None,
 ) -> dict[str, object]:
     history = metrics_store.history(system_id, limit, source)
     return {
@@ -202,7 +228,7 @@ def system_dashboard(
         Path(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$"),
     ],
     limit: Annotated[int, Query(ge=1, le=100)] = 25,
-    source: Annotated[Literal["local", "reported"] | None, Query()] = None,
+    source: Annotated[Literal["local", "reported", "docker"] | None, Query()] = None,
 ) -> dict[str, object]:
     dashboard = metrics_store.dashboard(system_id, limit, source)
     if system_id == "backend-local" and source == "local":

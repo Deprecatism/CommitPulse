@@ -82,6 +82,9 @@ The API will be available at:
 - http://localhost:8000/api/systems/{system_id}/metrics
 - http://localhost:8000/api/systems/{system_id}/dashboard
 - WebSocket: ws://localhost:8000/api/live
+- http://localhost:8000/api/github/config
+- http://localhost:8000/api/github/workflows?repo=owner/name
+- http://localhost:8000/api/github/runs?repo=owner/name
 
 External systems can report usage to `POST /api/webhooks/metrics/{system_id}` or
 `POST /api/systems/{system_id}/metrics`. Reports include commit identity and
@@ -104,6 +107,41 @@ systems and sources at `GET /api/systems`.
 Set `PUBLIC_API_URL` when building the frontend if the backend is not reachable
 on the same hostname at port 8000. Configure `FRONTEND_ORIGINS` as a comma-
 separated list of frontend origins when deploying away from localhost.
+
+## GitHub Actions dashboard
+
+A second, self-contained view lives at http://localhost:4321/actions (linked from
+the telemetry header). It provides a togglable workflow menu plus a live-ish list
+of GitHub Actions runs, mirroring the telemetry dashboard's layout. All GitHub
+calls are proxied through the backend under the `/api/github/*` prefix so the
+token never reaches the browser:
+
+- `GET /api/github/config` — reports whether a token is set and the default repo.
+- `GET /api/github/workflows?repo=owner/name` — list workflows.
+- `GET /api/github/runs?repo=owner/name&workflow_id=&status=&branch=` — list runs.
+- `GET /api/github/runs/{run_id}/jobs?repo=owner/name` — list a run's jobs.
+- `POST /api/github/workflows/{workflow_id}/dispatch?repo=owner/name` — trigger a
+  `workflow_dispatch` run (body: `{"ref": "main", "inputs": {...}}`).
+- `POST /api/github/runs/{run_id}/rerun?repo=owner/name` — re-run.
+- `POST /api/github/runs/{run_id}/cancel?repo=owner/name` — cancel.
+
+Configure it with environment variables before starting the backend:
+
+- `GITHUB_TOKEN` (or `GH_TOKEN`): personal access token. Public repositories work
+  read-only without one (subject to GitHub's rate limits); private repositories
+  and the re-run/cancel/dispatch actions require a token with the `actions`
+  scope.
+- `GITHUB_REPOSITORY` (or `GITHUB_DEFAULT_REPO`): default `owner/name` shown when
+  the client does not pass `?repo=`. The UI also remembers the last repository
+  you loaded and lets you switch repositories from the header.
+
+Example:
+
+```bash
+export GITHUB_TOKEN=ghp_your_token_here
+export GITHUB_REPOSITORY=owner/name
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```
 
 Example report:
 

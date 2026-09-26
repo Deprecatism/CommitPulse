@@ -1,0 +1,823 @@
+---
+import GithubActionsHeader from "./GithubActionsHeader.astro";
+import WorkflowRunCard from "./WorkflowRunCard.astro";
+
+const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
+---
+
+<main
+    id='actions-root'
+    data-api-base={apiBase}
+    class='min-h-screen bg-[#0a0a0a] text-white'>
+    <GithubActionsHeader />
+    <div class='mx-auto max-w-7xl space-y-5 px-4 py-6 sm:px-6 lg:px-8'>
+        <p
+            id='auth-banner'
+            hidden
+            class='rounded-2xl border border-amber-400/25 bg-amber-950/30 px-4 py-3 text-xs text-amber-200'>
+        </p>
+
+        <div class='flex flex-col gap-5 lg:flex-row'>
+            <aside
+                id='workflow-menu'
+                class='dashboard-panel min-w-0 space-y-5 lg:w-72 lg:shrink-0'>
+                <section
+                    class='rounded-3xl border border-white/10 bg-zinc-950/80 p-4'>
+                    <p
+                        class='text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500'>
+                        Workflows
+                    </p>
+                    <ul
+                        id='workflow-list'
+                        class='mt-3 space-y-1.5'
+                        aria-live='polite'>
+                        <li class='text-xs text-zinc-500'>
+                            Loading workflows…
+                        </li>
+                    </ul>
+                </section>
+
+                <section
+                    id='dispatch-panel'
+                    hidden
+                    class='rounded-3xl border border-white/10 bg-zinc-950/80 p-4'>
+                    <p
+                        class='text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500'>
+                        Run workflow
+                    </p>
+                    <p
+                        id='dispatch-target'
+                        class='mt-2 truncate text-xs text-zinc-400'>
+                    </p>
+                    <form
+                        id='dispatch-form'
+                        class='mt-3 space-y-2'>
+                        <label
+                            for='dispatch-ref'
+                            class='block text-[10px] uppercase tracking-[0.14em] text-zinc-600'>
+                            Git ref (branch or tag)
+                        </label>
+                        <input
+                            id='dispatch-ref'
+                            name='ref'
+                            type='text'
+                            value='main'
+                            autocomplete='off'
+                            spellcheck='false'
+                            class='w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 font-mono text-sm text-white outline-none focus:border-emerald-200/50'
+                        />
+                        <button
+                            type='submit'
+                            class='w-full rounded-lg border border-emerald-200/25 bg-emerald-200/10 px-3 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-200/20'>
+                            Trigger run
+                        </button>
+                    </form>
+                    <p
+                        id='dispatch-feedback'
+                        class='mt-2 text-[11px] text-zinc-500'>
+                    </p>
+                </section>
+            </aside>
+
+            <section
+                class='dashboard-panel min-w-0 flex-1 rounded-3xl border border-white/10 bg-zinc-950/80 p-5'>
+                <div
+                    class='mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
+                    <div>
+                        <p
+                            class='text-xs uppercase tracking-[0.22em] text-zinc-500'>
+                            Recent activity
+                        </p>
+                        <h2
+                            id='runs-heading'
+                            class='mt-2 text-2xl font-semibold text-white'>
+                            All workflow runs
+                        </h2>
+                        <p
+                            id='runs-context'
+                            class='mt-2 text-sm text-zinc-400'>
+                            Select a repository to load its GitHub Actions runs.
+                        </p>
+                    </div>
+                    <button
+                        id='refresh-runs'
+                        type='button'
+                        class='self-start rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-zinc-300 transition hover:border-emerald-200/25 hover:text-white sm:self-auto'>
+                        Refresh
+                    </button>
+                </div>
+                <div
+                    id='run-list'
+                    class='space-y-3'
+                    aria-live='polite'>
+                    <p class='text-sm text-zinc-500'>
+                        Waiting for workflow runs.
+                    </p>
+                </div>
+                <WorkflowRunCard />
+            </section>
+        </div>
+    </div>
+
+    <script>
+        import { animate, stagger } from "animejs";
+
+        type Workflow = {
+            id: number;
+            name: string;
+            path: string;
+            state: string;
+            html_url: string | null;
+        };
+        type WorkflowsResponse = {
+            repo: string;
+            total_count: number;
+            workflows: Workflow[];
+        };
+        type WorkflowRun = {
+            id: number;
+            name: string | null;
+            display_title: string | null;
+            run_number: number | null;
+            run_attempt: number | null;
+            event: string | null;
+            status: string | null;
+            conclusion: string | null;
+            head_branch: string | null;
+            head_sha: string | null;
+            workflow_id: number | null;
+            actor_login: string | null;
+            actor_avatar_url: string | null;
+            created_at: string | null;
+            updated_at: string | null;
+            run_started_at: string | null;
+            html_url: string | null;
+        };
+        type RunsResponse = {
+            repo: string;
+            workflow_id: number | null;
+            total_count: number;
+            runs: WorkflowRun[];
+        };
+        type Job = {
+            id: number;
+            name: string | null;
+            status: string | null;
+            conclusion: string | null;
+            started_at: string | null;
+            completed_at: string | null;
+            html_url: string | null;
+        };
+        type JobsResponse = { run_id: number; total_count: number; jobs: Job[] };
+        type ConfigResponse = {
+            authenticated: boolean;
+            default_repo: string | null;
+        };
+        type StatusStyle = { dot: string; badge: string; label: string };
+
+        const root = document.getElementById("actions-root")!;
+        const apiBase =
+            root.getAttribute("data-api-base") ||
+            `${window.location.protocol}//${window.location.hostname}:8000`;
+
+        const menu = document.getElementById("workflow-menu")!;
+        const menuToggle = document.getElementById("menu-toggle")!;
+        const repoForm = document.getElementById(
+            "repo-form",
+        ) as HTMLFormElement;
+        const repoInput = document.getElementById(
+            "repo-input",
+        ) as HTMLInputElement;
+        const liveToggle = document.getElementById("live-toggle")!;
+        const connectionState = document.getElementById("connection-state")!;
+        const connectionLabel = document.getElementById("connection-label")!;
+        const connectionIndicator = document.getElementById(
+            "connection-indicator",
+        )!;
+        const authBanner = document.getElementById(
+            "auth-banner",
+        ) as HTMLParagraphElement;
+        const workflowList = document.getElementById("workflow-list")!;
+        const runList = document.getElementById("run-list")!;
+        const runsHeading = document.getElementById("runs-heading")!;
+        const runsContext = document.getElementById("runs-context")!;
+        const refreshButton = document.getElementById("refresh-runs")!;
+        const dispatchPanel = document.getElementById(
+            "dispatch-panel",
+        ) as HTMLElement;
+        const dispatchTarget = document.getElementById("dispatch-target")!;
+        const dispatchForm = document.getElementById(
+            "dispatch-form",
+        ) as HTMLFormElement;
+        const dispatchRef = document.getElementById(
+            "dispatch-ref",
+        ) as HTMLInputElement;
+        const dispatchFeedback = document.getElementById("dispatch-feedback")!;
+        const runTemplate = document.getElementById(
+            "workflow-run-template",
+        ) as HTMLTemplateElement;
+
+        const motionEnabled = !window.matchMedia(
+            "(prefers-reduced-motion: reduce)",
+        ).matches;
+        const REPO_STORAGE_KEY = "commitpulse.actions.repo";
+        const REFRESH_INTERVAL_MS = 10000;
+
+        let currentRepo = "";
+        let selectedWorkflowId: number | null = null;
+        let workflows: Workflow[] = [];
+        let authenticated = false;
+        let autoRefresh = false;
+        let refreshTimer: number | null = null;
+
+        if (motionEnabled) {
+            animate("header", {
+                opacity: [0, 1],
+                translateY: [-16, 0],
+                duration: 680,
+                ease: "out(4)",
+            });
+            animate(".dashboard-panel", {
+                opacity: [0, 1],
+                translateY: [22, 0],
+                delay: stagger(130, { start: 120 }),
+                duration: 720,
+                ease: "out(4)",
+            });
+        }
+
+        const setConnectionState = (
+            state: "idle" | "loading" | "ready" | "error",
+            labelOverride?: string,
+        ): void => {
+            const styles = {
+                idle: {
+                    label: "Idle",
+                    pill: "rounded-full border border-white/10 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300",
+                    indicator: "bg-zinc-400",
+                },
+                loading: {
+                    label: "Loading",
+                    pill: "rounded-full border border-white/10 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300",
+                    indicator: "bg-amber-300 animate-live-indicator",
+                },
+                ready: {
+                    label: "Ready",
+                    pill: "rounded-full border border-emerald-200/20 bg-emerald-200/5 px-3 py-1.5 text-xs text-emerald-100",
+                    indicator: "bg-emerald-300",
+                },
+                error: {
+                    label: "Error",
+                    pill: "rounded-full border border-red-400/30 bg-red-950/50 px-3 py-1.5 text-xs text-red-200",
+                    indicator: "bg-red-300",
+                },
+            }[state];
+            connectionLabel.textContent = labelOverride ?? styles.label;
+            connectionState.className = styles.pill;
+            connectionIndicator.className = `mr-2 inline-block h-2 w-2 rounded-full ${styles.indicator}`;
+        };
+
+        const apiError = async (response: Response): Promise<string> => {
+            try {
+                const body = (await response.json()) as { detail?: string };
+                if (typeof body.detail === "string") return body.detail;
+            } catch {
+                /* fall through to status text */
+            }
+            return `Request failed (${response.status})`;
+        };
+
+        const relativeTime = (iso: string | null): string => {
+            if (!iso) return "unknown time";
+            const then = Date.parse(iso);
+            if (Number.isNaN(then)) return "unknown time";
+            const seconds = Math.round((Date.now() - then) / 1000);
+            if (seconds < 60) return `${Math.max(seconds, 0)}s ago`;
+            const minutes = Math.round(seconds / 60);
+            if (minutes < 60) return `${minutes}m ago`;
+            const hours = Math.round(minutes / 60);
+            if (hours < 24) return `${hours}h ago`;
+            return `${Math.round(hours / 24)}d ago`;
+        };
+
+        const formatDuration = (
+            startIso: string | null,
+            endIso: string | null,
+        ): string => {
+            if (!startIso) return "";
+            const start = Date.parse(startIso);
+            const end = endIso ? Date.parse(endIso) : Date.now();
+            if (Number.isNaN(start) || Number.isNaN(end)) return "";
+            const total = Math.max(Math.round((end - start) / 1000), 0);
+            const minutes = Math.floor(total / 60);
+            const seconds = total % 60;
+            return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+        };
+
+        const statusStyle = (run: WorkflowRun): StatusStyle => {
+            if (run.status !== "completed") {
+                if (run.status === "in_progress")
+                    return {
+                        dot: "bg-sky-400 animate-live-indicator",
+                        badge: "border-sky-400/30 bg-sky-950/40 text-sky-200",
+                        label: "In progress",
+                    };
+                return {
+                    dot: "bg-amber-300 animate-live-indicator",
+                    badge: "border-amber-400/30 bg-amber-950/40 text-amber-200",
+                    label: run.status ?? "queued",
+                };
+            }
+            switch (run.conclusion) {
+                case "success":
+                    return {
+                        dot: "bg-emerald-400",
+                        badge: "border-emerald-200/25 bg-emerald-200/10 text-emerald-100",
+                        label: "Success",
+                    };
+                case "failure":
+                case "timed_out":
+                case "startup_failure":
+                    return {
+                        dot: "bg-red-400",
+                        badge: "border-red-400/30 bg-red-950/50 text-red-200",
+                        label: run.conclusion.replace(/_/g, " "),
+                    };
+                case "action_required":
+                    return {
+                        dot: "bg-amber-300",
+                        badge: "border-amber-400/30 bg-amber-950/40 text-amber-200",
+                        label: "Action required",
+                    };
+                default:
+                    return {
+                        dot: "bg-zinc-400",
+                        badge: "border-white/10 bg-zinc-900 text-zinc-300",
+                        label: run.conclusion ?? "completed",
+                    };
+            }
+        };
+
+        const showAuthBanner = (): void => {
+            if (authenticated) {
+                authBanner.hidden = true;
+                return;
+            }
+            authBanner.hidden = false;
+            authBanner.textContent =
+                "No GITHUB_TOKEN configured on the backend. Public repositories " +
+                "are read-only and rate limited; re-run, cancel, and trigger " +
+                "actions are disabled.";
+        };
+
+        const renderRunJobs = (container: HTMLElement, jobs: Job[]): void => {
+            if (jobs.length === 0) {
+                const empty = document.createElement("p");
+                empty.className = "text-[11px] text-zinc-500";
+                empty.textContent = "No jobs reported for this run.";
+                container.replaceChildren(empty);
+                return;
+            }
+            const rows = jobs.map((job) => {
+                const row = document.createElement("div");
+                row.className =
+                    "flex items-center justify-between gap-3 rounded-lg border border-white/5 bg-black/20 px-3 py-1.5";
+                const left = document.createElement("div");
+                left.className = "flex min-w-0 items-center gap-2";
+                const dot = document.createElement("span");
+                const jobStyle = statusStyle({
+                    status: job.status,
+                    conclusion: job.conclusion,
+                } as WorkflowRun);
+                dot.className = `inline-block h-2 w-2 shrink-0 rounded-full ${jobStyle.dot}`;
+                const name = document.createElement("span");
+                name.className = "truncate text-[11px] text-zinc-300";
+                name.textContent = job.name ?? "job";
+                left.append(dot, name);
+                const meta = document.createElement("span");
+                meta.className = "shrink-0 text-[10px] text-zinc-500";
+                meta.textContent = `${jobStyle.label} · ${formatDuration(job.started_at, job.completed_at)}`;
+                row.append(left, meta);
+                return row;
+            });
+            container.replaceChildren(...rows);
+        };
+
+        const loadJobs = async (
+            runId: number,
+            container: HTMLElement,
+        ): Promise<void> => {
+            container.hidden = false;
+            container.textContent = "Loading jobs…";
+            container.className =
+                "mt-4 space-y-2 border-t border-white/5 pt-3 text-[11px] text-zinc-500";
+            try {
+                const query = new URLSearchParams({ repo: currentRepo });
+                const response = await fetch(
+                    `${apiBase}/api/github/runs/${runId}/jobs?${query}`,
+                );
+                if (!response.ok) throw new Error(await apiError(response));
+                const data = (await response.json()) as JobsResponse;
+                container.className =
+                    "mt-4 space-y-2 border-t border-white/5 pt-3";
+                renderRunJobs(container, data.jobs);
+            } catch (error) {
+                container.textContent =
+                    error instanceof Error ? error.message : "Could not load jobs.";
+            }
+        };
+
+        const runAction = async (
+            path: string,
+            successLabel: string,
+        ): Promise<void> => {
+            if (!authenticated) {
+                setConnectionState("error", "Token required");
+                return;
+            }
+            setConnectionState("loading", successLabel);
+            try {
+                const query = new URLSearchParams({ repo: currentRepo });
+                const response = await fetch(`${apiBase}${path}?${query}`, {
+                    method: "POST",
+                });
+                if (!response.ok) throw new Error(await apiError(response));
+                setConnectionState("ready");
+                window.setTimeout(() => void loadRuns(), 1200);
+            } catch (error) {
+                setConnectionState(
+                    "error",
+                    error instanceof Error ? error.message : "Action failed",
+                );
+            }
+        };
+
+        const buildRunCard = (run: WorkflowRun): DocumentFragment => {
+            const card = runTemplate.content.cloneNode(true) as DocumentFragment;
+            const style = statusStyle(run);
+            const set = (selector: string, value: string): void => {
+                const element = card.querySelector(selector);
+                if (element) element.textContent = value;
+            };
+            const dot = card.querySelector("[data-run-status]");
+            if (dot)
+                dot.className = `mt-1 inline-block h-2.5 w-2.5 shrink-0 rounded-full ${style.dot}`;
+            set(
+                "[data-run-title]",
+                run.display_title || run.name || "Workflow run",
+            );
+            const number = run.run_number ? `#${run.run_number}` : "run";
+            const duration = formatDuration(
+                run.run_started_at || run.created_at,
+                run.status === "completed" ? run.updated_at : null,
+            );
+            set(
+                "[data-run-meta]",
+                [
+                    number,
+                    run.event ?? "event",
+                    run.actor_login ? `by ${run.actor_login}` : null,
+                    `started ${relativeTime(run.run_started_at || run.created_at)}`,
+                    duration ? `· ${duration}` : null,
+                ]
+                    .filter(Boolean)
+                    .join(" · "),
+            );
+            const badge = card.querySelector("[data-run-badge]");
+            if (badge) {
+                badge.textContent = style.label;
+                badge.className = `rounded-full border px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em] ${style.badge}`;
+            }
+            set("[data-run-branch]", run.head_branch || "unknown branch");
+            set(
+                "[data-run-sha]",
+                run.head_sha ? run.head_sha.slice(0, 7) : "",
+            );
+
+            const view = card.querySelector(
+                "[data-action='view']",
+            ) as HTMLAnchorElement | null;
+            if (view) {
+                if (run.html_url) view.href = run.html_url;
+                else view.remove();
+            }
+
+            const jobsContainer = card.querySelector(
+                "[data-run-jobs]",
+            ) as HTMLElement;
+            const jobsButton = card.querySelector(
+                "[data-action='jobs']",
+            ) as HTMLButtonElement | null;
+            let jobsLoaded = false;
+            jobsButton?.addEventListener("click", () => {
+                if (jobsContainer.hidden === false) {
+                    jobsContainer.hidden = true;
+                    return;
+                }
+                if (jobsLoaded) {
+                    jobsContainer.hidden = false;
+                    return;
+                }
+                jobsLoaded = true;
+                void loadJobs(run.id, jobsContainer);
+            });
+
+            const rerunButton = card.querySelector(
+                "[data-action='rerun']",
+            ) as HTMLButtonElement | null;
+            const cancelButton = card.querySelector(
+                "[data-action='cancel']",
+            ) as HTMLButtonElement | null;
+            if (!authenticated) {
+                rerunButton?.remove();
+                cancelButton?.remove();
+            } else {
+                rerunButton?.addEventListener(
+                    "click",
+                    () =>
+                        void runAction(
+                            `/api/github/runs/${run.id}/rerun`,
+                            "Queuing re-run",
+                        ),
+                );
+                if (run.status === "completed") cancelButton?.remove();
+                else
+                    cancelButton?.addEventListener(
+                        "click",
+                        () =>
+                            void runAction(
+                                `/api/github/runs/${run.id}/cancel`,
+                                "Cancelling run",
+                            ),
+                    );
+            }
+            return card;
+        };
+
+        const renderRuns = (runs: WorkflowRun[]): void => {
+            if (runs.length === 0) {
+                const empty = document.createElement("p");
+                empty.className = "text-sm text-zinc-500";
+                empty.textContent = "No workflow runs found for this selection.";
+                runList.replaceChildren(empty);
+                return;
+            }
+            runList.replaceChildren(...runs.map(buildRunCard));
+            if (motionEnabled) {
+                animate(runList.querySelectorAll("article"), {
+                    opacity: [0, 1],
+                    translateY: [12, 0],
+                    delay: stagger(45),
+                    duration: 420,
+                    ease: "out(3)",
+                });
+            }
+        };
+
+        const renderMenu = (): void => {
+            const items: HTMLLIElement[] = [];
+            const allItem = document.createElement("li");
+            const allButton = document.createElement("button");
+            allButton.type = "button";
+            allButton.dataset.workflowId = "";
+            allButton.className = menuItemClass(selectedWorkflowId === null);
+            allButton.textContent = "All workflow runs";
+            allButton.addEventListener("click", () => selectWorkflow(null));
+            allItem.append(allButton);
+            items.push(allItem);
+
+            for (const workflow of workflows) {
+                const item = document.createElement("li");
+                const button = document.createElement("button");
+                button.type = "button";
+                button.dataset.workflowId = String(workflow.id);
+                button.className = menuItemClass(
+                    selectedWorkflowId === workflow.id,
+                );
+                const name = document.createElement("span");
+                name.className = "truncate";
+                name.textContent = workflow.name;
+                button.append(name);
+                if (workflow.state !== "active") {
+                    const state = document.createElement("span");
+                    state.className =
+                        "ml-2 shrink-0 text-[9px] uppercase text-zinc-600";
+                    state.textContent = workflow.state;
+                    button.append(state);
+                }
+                button.addEventListener("click", () =>
+                    selectWorkflow(workflow.id),
+                );
+                item.append(button);
+                items.push(item);
+            }
+
+            if (workflows.length === 0) {
+                const empty = document.createElement("li");
+                empty.className = "px-2 py-1 text-xs text-zinc-500";
+                empty.textContent = "No workflows in this repository.";
+                items.push(empty);
+            }
+            workflowList.replaceChildren(...items);
+        };
+
+        const menuItemClass = (active: boolean): string =>
+            `flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition ${
+                active
+                    ? "border border-emerald-200/25 bg-emerald-200/10 text-emerald-100"
+                    : "border border-transparent text-zinc-300 hover:bg-white/5"
+            }`;
+
+        const updateDispatchPanel = (): void => {
+            const workflow = workflows.find(
+                (item) => item.id === selectedWorkflowId,
+            );
+            if (!workflow || !authenticated) {
+                dispatchPanel.hidden = true;
+                return;
+            }
+            dispatchPanel.hidden = false;
+            dispatchTarget.textContent = workflow.name;
+            dispatchFeedback.textContent = "";
+        };
+
+        const selectWorkflow = (workflowId: number | null): void => {
+            selectedWorkflowId = workflowId;
+            const workflow = workflows.find((item) => item.id === workflowId);
+            runsHeading.textContent = workflow
+                ? workflow.name
+                : "All workflow runs";
+            renderMenu();
+            updateDispatchPanel();
+            void loadRuns();
+        };
+
+        const loadWorkflows = async (): Promise<void> => {
+            const query = new URLSearchParams({ repo: currentRepo });
+            const response = await fetch(
+                `${apiBase}/api/github/workflows?${query}`,
+            );
+            if (!response.ok) throw new Error(await apiError(response));
+            const data = (await response.json()) as WorkflowsResponse;
+            workflows = data.workflows;
+            if (
+                selectedWorkflowId !== null &&
+                !workflows.some((item) => item.id === selectedWorkflowId)
+            )
+                selectedWorkflowId = null;
+            renderMenu();
+            updateDispatchPanel();
+        };
+
+        const loadRuns = async (): Promise<void> => {
+            if (!currentRepo) return;
+            setConnectionState("loading");
+            try {
+                const query = new URLSearchParams({
+                    repo: currentRepo,
+                    per_page: "25",
+                });
+                if (selectedWorkflowId !== null)
+                    query.set("workflow_id", String(selectedWorkflowId));
+                const response = await fetch(
+                    `${apiBase}/api/github/runs?${query}`,
+                );
+                if (!response.ok) throw new Error(await apiError(response));
+                const data = (await response.json()) as RunsResponse;
+                runsContext.textContent = `${currentRepo} · ${data.total_count} run${
+                    data.total_count === 1 ? "" : "s"
+                } · updated ${new Date().toLocaleTimeString()}`;
+                renderRuns(data.runs);
+                setConnectionState("ready");
+            } catch (error) {
+                const message =
+                    error instanceof Error ? error.message : "Unknown error";
+                runsContext.textContent = message;
+                const notice = document.createElement("p");
+                notice.className = "text-sm text-red-300";
+                notice.textContent = message;
+                runList.replaceChildren(notice);
+                setConnectionState("error");
+            }
+        };
+
+        const reload = async (): Promise<void> => {
+            if (!currentRepo) return;
+            setConnectionState("loading");
+            try {
+                await loadWorkflows();
+            } catch (error) {
+                console.error(error);
+            }
+            await loadRuns();
+        };
+
+        const setRepo = (repo: string): void => {
+            const trimmed = repo.trim();
+            if (!trimmed) return;
+            currentRepo = trimmed;
+            repoInput.value = trimmed;
+            try {
+                window.localStorage.setItem(REPO_STORAGE_KEY, trimmed);
+            } catch {
+                /* storage may be unavailable */
+            }
+            selectedWorkflowId = null;
+            runsHeading.textContent = "All workflow runs";
+            void reload();
+        };
+
+        const setMenuOpen = (open: boolean): void => {
+            menu.hidden = !open;
+            menuToggle.setAttribute("aria-expanded", String(open));
+        };
+
+        const setAutoRefresh = (enabled: boolean): void => {
+            autoRefresh = enabled;
+            liveToggle.setAttribute("aria-pressed", String(enabled));
+            liveToggle.textContent = `Auto-refresh: ${enabled ? "on" : "off"}`;
+            liveToggle.className = enabled
+                ? "rounded-lg border border-emerald-200/25 bg-emerald-200/10 px-3 py-2 text-sm text-emerald-100 transition hover:bg-emerald-200/20"
+                : "rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-zinc-300 transition hover:border-emerald-200/25 hover:text-white";
+            if (refreshTimer !== null) {
+                window.clearInterval(refreshTimer);
+                refreshTimer = null;
+            }
+            if (enabled)
+                refreshTimer = window.setInterval(
+                    () => void loadRuns(),
+                    REFRESH_INTERVAL_MS,
+                );
+        };
+
+        menuToggle.addEventListener("click", () =>
+            setMenuOpen(menu.hidden),
+        );
+        liveToggle.addEventListener("click", () => setAutoRefresh(!autoRefresh));
+        refreshButton.addEventListener("click", () => void loadRuns());
+        repoForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            setRepo(repoInput.value);
+        });
+        dispatchForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            void triggerDispatch();
+        });
+
+        const triggerDispatch = async (): Promise<void> => {
+            if (selectedWorkflowId === null || !authenticated) return;
+            const ref = dispatchRef.value.trim() || "main";
+            dispatchFeedback.textContent = "Dispatching…";
+            try {
+                const query = new URLSearchParams({ repo: currentRepo });
+                const response = await fetch(
+                    `${apiBase}/api/github/workflows/${selectedWorkflowId}/dispatch?${query}`,
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ ref }),
+                    },
+                );
+                if (!response.ok) throw new Error(await apiError(response));
+                dispatchFeedback.textContent = `Triggered on ${ref}. Runs refresh shortly.`;
+                window.setTimeout(() => void loadRuns(), 1800);
+            } catch (error) {
+                dispatchFeedback.textContent =
+                    error instanceof Error
+                        ? error.message
+                        : "Could not dispatch workflow.";
+            }
+        };
+
+        const init = async (): Promise<void> => {
+            if (window.innerWidth < 1024) setMenuOpen(false);
+            try {
+                const response = await fetch(`${apiBase}/api/github/config`);
+                if (response.ok) {
+                    const config = (await response.json()) as ConfigResponse;
+                    authenticated = config.authenticated;
+                    if (!repoInput.value && config.default_repo)
+                        repoInput.value = config.default_repo;
+                }
+            } catch (error) {
+                console.error(error);
+                setConnectionState("error", "Backend unreachable");
+            }
+            showAuthBanner();
+
+            let stored: string | null = null;
+            try {
+                stored = window.localStorage.getItem(REPO_STORAGE_KEY);
+            } catch {
+                stored = null;
+            }
+            const initialRepo = repoInput.value || stored || "";
+            if (initialRepo) setRepo(initialRepo);
+            else
+                runsContext.textContent =
+                    "Enter a repository (owner/name) above to load its runs.";
+        };
+
+        void init();
+    </script>
+</main>

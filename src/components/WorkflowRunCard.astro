@@ -1,0 +1,71 @@
+<template id='workflow-run-template'>
+    <article
+        data-motion='run-card'
+        class='min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-black/30 p-4 transition duration-300 hover:-translate-y-0.5 hover:border-emerald-200/20'>
+        <div
+            class='flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
+            <div class='flex min-w-0 items-start gap-3'>
+                <span
+                    data-run-status
+                    class='mt-1 inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-zinc-500'>
+                </span>
+                <div class='min-w-0 space-y-1'>
+                    <h3
+                        data-run-title
+                        class='break-words text-base font-semibold leading-snug text-white'>
+                    </h3>
+                    <p
+                        data-run-meta
+                        class='break-words text-xs text-zinc-500'>
+                    </p>
+                    <div class='flex flex-wrap items-center gap-2 pt-1'>
+                        <span
+                            data-run-badge
+                            class='rounded-full border border-white/10 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-zinc-300'>
+                        </span>
+                        <span
+                            data-run-branch
+                            class='rounded-md border border-white/10 bg-zinc-900 px-2 py-0.5 font-mono text-[10px] text-zinc-400'>
+                        </span>
+                        <span
+                            data-run-sha
+                            class='font-mono text-[10px] text-zinc-500'>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class='flex shrink-0 flex-wrap items-center gap-2'>
+                <button
+                    type='button'
+                    data-action='jobs'
+                    class='rounded-lg border border-white/10 bg-zinc-900 px-2.5 py-1.5 text-[11px] font-medium text-zinc-300 transition hover:border-emerald-200/25 hover:text-white'>
+                    Jobs
+                </button>
+                <button
+                    type='button'
+                    data-action='rerun'
+                    class='rounded-lg border border-emerald-200/25 bg-emerald-200/10 px-2.5 py-1.5 text-[11px] font-medium text-emerald-100 transition hover:bg-emerald-200/20'>
+                    Re-run
+                </button>
+                <button
+                    type='button'
+                    data-action='cancel'
+                    class='rounded-lg border border-amber-400/25 bg-amber-950/40 px-2.5 py-1.5 text-[11px] font-medium text-amber-200 transition hover:bg-amber-900/40'>
+                    Cancel
+                </button>
+                <a
+                    data-action='view'
+                    target='_blank'
+                    rel='noreferrer'
+                    class='rounded-lg border border-white/10 bg-zinc-900 px-2.5 py-1.5 text-[11px] font-medium text-zinc-300 transition hover:border-emerald-200/25 hover:text-white'>
+                    View ↗
+                </a>
+            </div>
+        </div>
+        <div
+            data-run-jobs
+            hidden
+            class='mt-4 space-y-2 border-t border-white/5 pt-3'>
+        </div>
+    </article>
+</template>

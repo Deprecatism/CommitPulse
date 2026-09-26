@@ -9,75 +9,49 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
 ---
 
 <main
-    id='dashboard'
+    id="dashboard"
     data-api-base={apiBase}
-    class='min-h-screen bg-[#0a0a0a] text-white'>
+    class="min-h-screen bg-[#0a0a0a] text-white"
+>
     <DashboardHeader />
-    <div class='mx-auto max-w-7xl space-y-5 px-4 py-6 sm:px-6 lg:px-8'>
+    <div class="mx-auto max-w-7xl space-y-5 px-4 py-6 sm:px-6 lg:px-8">
         <RepositoryInfo />
-        <section
-            class='dashboard-panel min-w-0 rounded-3xl border border-white/10 bg-zinc-950/80 p-5'>
-            <div
-                class='mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
+        <section class="dashboard-panel min-w-0 rounded-3xl border border-white/10 bg-zinc-950/80 p-5">
+            <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <p
-                        class='text-xs uppercase tracking-[0.22em] text-zinc-500'>
+                    <p class="text-xs uppercase tracking-[0.22em] text-zinc-500">
                         Current statistics
                     </p>
-                    <h2 class='mt-2 text-2xl font-semibold text-white'>
+                    <h2 class="mt-2 text-2xl font-semibold text-white">
                         Latest system snapshot
                     </h2>
-                    <p
-                        id='commit-context'
-                        class='mt-2 text-sm text-zinc-400'>
+                    <p id="commit-context" class="mt-2 text-sm text-zinc-400">
                         Waiting for a system report
                     </p>
                 </div>
-                <p
-                    id='snapshot-time'
-                    class='text-xs text-zinc-500'>
-                </p>
+                <p id="snapshot-time" class="text-xs text-zinc-500"></p>
             </div>
-            <div class='grid gap-3 md:grid-cols-2 xl:grid-cols-5'>
-                <MetricCard
-                    label='CPU'
-                    metricId='cpu'
-                />
-                <MetricCard
-                    label='Memory'
-                    metricId='memory'
-                />
-                <MetricCard
-                    label='Disk'
-                    metricId='disk'
-                />
-                <MetricCard
-                    label='Network total'
-                    metricId='network'
-                />
-                <MetricCard
-                    label='Uptime'
-                    metricId='uptime'
-                />
+            <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                <MetricCard label="CPU" metricId="cpu" />
+                <MetricCard label="Memory" metricId="memory" />
+                <MetricCard label="Disk" metricId="disk" />
+                <MetricCard label="Network total" metricId="network" />
+                <MetricCard label="Uptime" metricId="uptime" />
             </div>
             <MetricsTrendPanel />
         </section>
 
-        <section
-            class='dashboard-panel rounded-3xl border border-white/10 bg-zinc-950/80 p-5'>
-            <div class='mb-5'>
-                <p class='text-xs uppercase tracking-[0.22em] text-zinc-500'>
+        <section class="dashboard-panel rounded-3xl border border-white/10 bg-zinc-950/80 p-5">
+            <div class="mb-5">
+                <p class="text-xs uppercase tracking-[0.22em] text-zinc-500">
                     Commit comparison
                 </p>
-                <h2 class='mt-2 text-2xl font-semibold text-white'>
+                <h2 class="mt-2 text-2xl font-semibold text-white">
                     Previous vs current commit
                 </h2>
             </div>
-            <div
-                id='commit-list'
-                class='space-y-3'
-                aria-live='polite'>
-                <p class='text-sm text-zinc-500'>
+            <div id="commit-list" class="space-y-3" aria-live="polite">
+                <p class="text-sm text-zinc-500">
                     Waiting for commit-linked metrics.
                 </p>
             </div>
@@ -93,7 +67,7 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
             id: number;
             system_id: string;
             repository_name?: string | null;
-            source: "local" | "reported";
+            source: "local" | "reported" | "docker";
             commit_sha: string;
             commit_message: string;
             branch: string | null;
@@ -114,7 +88,7 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
         };
         type SystemEntry = {
             system_id: string;
-            source: "local" | "reported";
+            source: "local" | "reported" | "docker";
             last_reported_at: string;
         };
         type CommitComparison = {
@@ -247,16 +221,16 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
             value: number,
             previous: number | null,
         ): string =>
-            previous === null ?
-                "previous unavailable"
-            :   `previous ${previous.toFixed(1)}% (${value - previous >= 0 ? "+" : ""}${(value - previous).toFixed(1)}%)`;
+            previous === null
+                ? "previous unavailable"
+                : `previous ${previous.toFixed(1)}% (${value - previous >= 0 ? "+" : ""}${(value - previous).toFixed(1)}%)`;
         const bytePrevious = (
             value: number,
             previous: number | null,
         ): string =>
-            previous === null ?
-                "previous unavailable"
-            :   `previous ${formatBytes(previous)} (${value - previous >= 0 ? "+" : "-"}${formatBytes(Math.abs(value - previous))})`;
+            previous === null
+                ? "previous unavailable"
+                : `previous ${formatBytes(previous)} (${value - previous >= 0 ? "+" : "-"}${formatBytes(Math.abs(value - previous))})`;
 
         const renderComparisons = (commits: CommitComparison[]): void => {
             const list = document.getElementById("commit-list")!;
@@ -311,9 +285,9 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
                     ],
                 ] as const) {
                     const change =
-                        prior === undefined ?
-                            `avg ${average.toFixed(1)}%`
-                        :   `${value - prior >= 0 ? "+" : ""}${(value - prior).toFixed(1)}%`;
+                        prior === undefined
+                            ? `avg ${average.toFixed(1)}%`
+                            : `${value - prior >= 0 ? "+" : ""}${(value - prior).toFixed(1)}%`;
                     setCardText(
                         `[data-delta='${metric}']`,
                         `${label} ${change}`,
@@ -346,9 +320,11 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
             );
             setText(
                 "repository-source",
-                current.source === "local" ?
-                    "Local collector"
-                :   "External system",
+                current.source === "local"
+                    ? "Local collector"
+                    : current.source === "docker"
+                      ? "Docker container"
+                      : "External system",
             );
             setText(
                 "repository-branch",
@@ -393,11 +369,9 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
             renderLatestSnapshot(current);
             const network =
                 current.network_sent_bytes + current.network_received_bytes;
-            const previousNetwork =
-                previous ?
-                    previous.network_sent_bytes +
-                    previous.network_received_bytes
-                :   null;
+            const previousNetwork = previous
+                ? previous.network_sent_bytes + previous.network_received_bytes
+                : null;
             setText(
                 "cpu-previous",
                 percentPrevious(
@@ -422,9 +396,9 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
             setText("network-previous", bytePrevious(network, previousNetwork));
             setText(
                 "uptime-previous",
-                previous ?
-                    `previous ${formatUptime(previous.uptime_seconds)}`
-                :   "previous unavailable",
+                previous
+                    ? `previous ${formatUptime(previous.uptime_seconds)}`
+                    : "previous unavailable",
             );
             displayedCommitSha = current.commit_sha;
             renderComparisons(data.commits);
@@ -510,11 +484,13 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
                 options.push(empty);
             }
             systemSelect.replaceChildren(...options);
-            systemSelect.value =
-                options.some((option) => option.value === preferredKey) ?
-                    preferredKey!
-                : options.some((option) => option.value === oldValue) ? oldValue
-                : options[0].value;
+            systemSelect.value = options.some(
+                (option) => option.value === preferredKey,
+            )
+                ? preferredKey!
+                : options.some((option) => option.value === oldValue)
+                  ? oldValue
+                  : options[0].value;
             await refreshDashboard();
         };
 

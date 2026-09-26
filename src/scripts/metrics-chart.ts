@@ -168,16 +168,6 @@ export class MetricsGraph {
         }
     }
 
-    appendSample(sample: MetricsSample, systemKey: string): void {
-        if (this.systemKey !== systemKey || !this.chart) {
-            this.setHistory([sample], systemKey);
-            return;
-        }
-        if (sample.id > (this.samples.at(-1)?.id ?? -1)) {
-            this.append([sample]);
-        }
-    }
-
     private reset(systemKey: string): void {
         this.chart?.destroy();
         this.chart = null;
