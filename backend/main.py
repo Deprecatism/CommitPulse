@@ -5,7 +5,7 @@ import subprocess
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path as FilePath
-from typing import Annotated, Literal
+from typing import Annotated, Literal, cast
 
 from fastapi import FastAPI, Header, HTTPException, Path, Query, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
@@ -47,6 +47,42 @@ def git_value(*arguments: str) -> str | None:
     return result.stdout.strip() or None
 
 
+def current_commit_metadata() -> tuple[str, str, str | None]:
+    git_commit = git_value("log", "-1", "--format=%H%n%s")
+    git_sha, _, git_message = git_commit.partition("\n") if git_commit else ("", "", "")
+    return (
+        os.getenv("METRICS_COMMIT_SHA") or git_sha or "unknown",
+        os.getenv("METRICS_COMMIT_MESSAGE")
+        or git_message
+        or "Local backend monitoring",
+        os.getenv("METRICS_BRANCH") or git_value("branch", "--show-current"),
+    )
+
+
+def commits_in_current_repository(commit_shas: list[str]) -> set[str] | None:
+    if not commit_shas:
+        return set()
+    try:
+        result = subprocess.run(
+            ["git", "cat-file", "--batch-check=%(objectname) %(objecttype)"],
+            cwd=FilePath(__file__).resolve().parent.parent,
+            input="\n".join(commit_shas),
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return {
+        object_name
+        for line in result.stdout.splitlines()
+        if len(parts := line.rsplit(" ", 1)) == 2
+        for object_name, object_type in [parts]
+        if object_type == "commit"
+    }
+
+
 def broadcast_local_sample(sample: dict[str, object]) -> None:
     live_updates.broadcast_from_thread({"type": "metrics.updated", "data": sample})
 
@@ -54,13 +90,7 @@ def broadcast_local_sample(sample: dict[str, object]) -> None:
 metrics_monitor = SystemMetricsMonitor(
     metrics_store,
     interval_seconds=metrics_interval_seconds,
-    commit_sha=os.getenv("METRICS_COMMIT_SHA")
-    or git_value("rev-parse", "HEAD")
-    or "unknown",
-    commit_message=os.getenv("METRICS_COMMIT_MESSAGE")
-    or git_value("log", "-1", "--format=%s")
-    or "Local backend monitoring",
-    branch=os.getenv("METRICS_BRANCH") or git_value("branch", "--show-current"),
+    commit_metadata_provider=current_commit_metadata,
     on_sample=broadcast_local_sample,
 )
 
@@ -167,7 +197,37 @@ def system_dashboard(
     limit: Annotated[int, Query(ge=1, le=100)] = 25,
     source: Annotated[Literal["local", "reported"] | None, Query()] = None,
 ) -> dict[str, object]:
-    return metrics_store.dashboard(system_id, limit, source)
+    dashboard = metrics_store.dashboard(system_id, limit, source)
+    if system_id == "backend-local" and source == "local":
+        commits_value = dashboard["commits"]
+        if isinstance(commits_value, list):
+            commits = cast(list[dict[str, object]], commits_value)
+            commit_shas = [
+                str(commit["commit_sha"])
+                for commit in commits
+                if "commit_sha" in commit
+            ]
+            valid_shas = commits_in_current_repository(commit_shas)
+            if valid_shas is not None:
+                valid_commits: list[dict[str, object]] = [
+                    commit
+                    for commit in commits
+                    if str(commit.get("commit_sha")) in valid_shas
+                ]
+                for index, commit in enumerate(valid_commits):
+                    commit["previous"] = (
+                        valid_commits[index + 1]["current"]
+                        if index + 1 < len(valid_commits)
+                        else None
+                    )
+                dashboard["commits"] = valid_commits
+                dashboard["current"] = (
+                    valid_commits[0]["current"] if valid_commits else None
+                )
+                dashboard["previous"] = (
+                    valid_commits[1]["current"] if len(valid_commits) > 1 else None
+                )
+    return dashboard
 
 
 @app.websocket("/api/live")

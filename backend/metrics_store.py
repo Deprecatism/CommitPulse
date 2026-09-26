@@ -145,7 +145,7 @@ class MetricsStore:
             connection.row_factory = sqlite3.Row
             rows = connection.execute(
                 """
-                  SELECT source, commit_sha, commit_message, branch, timestamp,
+                  SELECT id, source, commit_sha, commit_message, branch, timestamp,
                       cpu_percent, memory_percent, memory_used_bytes, memory_total_bytes,
                       disk_percent, disk_used_bytes,
                        disk_total_bytes, network_sent_bytes, network_received_bytes,

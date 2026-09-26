@@ -22,6 +22,8 @@ class SystemMetricsMonitor:
         commit_sha: str = "unknown",
         commit_message: str = "Local backend monitoring",
         branch: str | None = None,
+        commit_metadata_provider: Callable[[], tuple[str, str, str | None]]
+        | None = None,
         on_sample: Callable[[dict[str, object]], None] | None = None,
     ) -> None:
         if interval_seconds <= 0:
@@ -33,6 +35,7 @@ class SystemMetricsMonitor:
         self.commit_sha = commit_sha
         self.commit_message = commit_message
         self.branch = branch
+        self.commit_metadata_provider = commit_metadata_provider
         self.on_sample = on_sample
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
@@ -69,10 +72,15 @@ class SystemMetricsMonitor:
         memory = psutil.virtual_memory()
         disk = psutil.disk_usage(os.path.abspath(os.sep))
         network = psutil.net_io_counters()
+        commit_sha, commit_message, branch = (
+            self.commit_metadata_provider()
+            if self.commit_metadata_provider is not None
+            else (self.commit_sha, self.commit_message, self.branch)
+        )
         report = SystemMetricsReport(
-            commit_sha=self.commit_sha,
-            commit_message=self.commit_message,
-            branch=self.branch,
+            commit_sha=commit_sha,
+            commit_message=commit_message,
+            branch=branch,
             timestamp=datetime.now(timezone.utc),
             cpu_percent=psutil.cpu_percent(interval=None),
             memory_percent=memory.percent,
