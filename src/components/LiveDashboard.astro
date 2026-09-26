@@ -3,6 +3,7 @@ import CommitComparisonCard from "./CommitComparisonCard.astro";
 import DashboardHeader from "./DashboardHeader.astro";
 import MetricCard from "./MetricCard.astro";
 import MetricsTrendPanel from "./MetricsTrendPanel.astro";
+import ProjectManager from "./ProjectManager.astro";
 import RepositoryInfo from "./RepositoryInfo.astro";
 
 const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
@@ -16,6 +17,7 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
     <DashboardHeader />
     <div class="mx-auto max-w-7xl space-y-5 px-4 py-6 sm:px-6 lg:px-8">
         <RepositoryInfo />
+        <ProjectManager />
         <section class="dashboard-panel min-w-0 rounded-3xl border border-white/10 bg-zinc-950/80 p-5">
             <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
@@ -67,7 +69,7 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
             id: number;
             system_id: string;
             repository_name?: string | null;
-            source: "local" | "reported" | "docker";
+            source: "local" | "reported" | "docker" | "project";
             commit_sha: string;
             commit_message: string;
             branch: string | null;
@@ -88,7 +90,7 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
         };
         type SystemEntry = {
             system_id: string;
-            source: "local" | "reported" | "docker";
+            source: "local" | "reported" | "docker" | "project";
             last_reported_at: string;
         };
         type CommitComparison = {
@@ -324,7 +326,9 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
                     ? "Local collector"
                     : current.source === "docker"
                       ? "Docker container"
-                      : "External system",
+                      : current.source === "project"
+                        ? "Project process tree"
+                        : "External system",
             );
             setText(
                 "repository-branch",

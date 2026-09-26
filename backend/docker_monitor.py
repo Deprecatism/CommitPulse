@@ -196,7 +196,7 @@ class DockerMetricsMonitor:
         try:
             client = self._build_client()
             client.get("/_ping", timeout=2.0).raise_for_status()
-        except Exception as error:
+        except (httpx.HTTPError, OSError) as error:
             logger.warning(
                 "Docker monitoring disabled: could not reach the Docker daemon (%s)",
                 error,

@@ -17,12 +17,18 @@ if __package__:
     from .live_updates import LiveUpdateHub
     from .metrics_store import MetricsStore, SystemMetricsReport
     from .performance_monitor import SystemMetricsMonitor
+    from .project_monitor import ProjectMetricsMonitor
+    from .projects_api import configure as configure_projects
+    from .projects_api import router as projects_router
 else:
     from docker_monitor import DockerMetricsMonitor
     from github_actions import router as github_router
     from live_updates import LiveUpdateHub
     from metrics_store import MetricsStore, SystemMetricsReport
     from performance_monitor import SystemMetricsMonitor
+    from project_monitor import ProjectMetricsMonitor
+    from projects_api import configure as configure_projects
+    from projects_api import router as projects_router
 
 
 def _env_flag(name: str, default: str) -> bool:
@@ -41,6 +47,11 @@ docker_interval_seconds = float(
     os.getenv("DOCKER_INTERVAL_SECONDS", str(metrics_interval_seconds))
 )
 docker_collect_disk_usage = _env_flag("DOCKER_COLLECT_DISK_USAGE", "false")
+project_monitoring_enabled = _env_flag("PROJECT_MONITORING_ENABLED", "true")
+project_interval_seconds = float(
+    os.getenv("PROJECT_INTERVAL_SECONDS", str(metrics_interval_seconds))
+)
+project_allow_launch = _env_flag("PROJECTS_ALLOW_LAUNCH", "false")
 webhook_secret = os.getenv("METRICS_WEBHOOK_SECRET")
 live_updates = LiveUpdateHub()
 
@@ -121,6 +132,15 @@ docker_monitor = DockerMetricsMonitor(
     collect_disk_usage=docker_collect_disk_usage,
 )
 
+project_monitor = ProjectMetricsMonitor(
+    metrics_store,
+    interval_seconds=project_interval_seconds,
+    on_sample=broadcast_local_sample,
+    config_path=os.getenv("PROJECTS_CONFIG_PATH"),
+    allow_launch=project_allow_launch,
+)
+configure_projects(project_monitor)
+
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
@@ -130,6 +150,10 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
         metrics_monitor.start()
     if docker_monitoring_enabled:
         docker_monitor.start()
+    if project_monitoring_enabled:
+        project_monitor.load()
+        project_monitor.seed_from_env(os.getenv("TRACKED_PROJECTS"))
+        project_monitor.start()
     try:
         yield
     finally:
@@ -137,6 +161,8 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
             metrics_monitor.stop()
         if docker_monitoring_enabled:
             docker_monitor.stop()
+        if project_monitoring_enabled:
+            project_monitor.stop()
 
 
 app = FastAPI(title="CommitPulse API", version="1.0.0", lifespan=lifespan)
@@ -158,6 +184,7 @@ app.add_middleware(
 )
 
 app.include_router(github_router)
+app.include_router(projects_router)
 
 
 @app.get("/api/health")
@@ -211,7 +238,9 @@ def metrics_history(
         Path(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$"),
     ],
     limit: Annotated[int, Query(ge=1, le=1000)] = 100,
-    source: Annotated[Literal["local", "reported", "docker"] | None, Query()] = None,
+    source: Annotated[
+        Literal["local", "reported", "docker", "project"] | None, Query()
+    ] = None,
 ) -> dict[str, object]:
     history = metrics_store.history(system_id, limit, source)
     return {
@@ -228,7 +257,9 @@ def system_dashboard(
         Path(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$"),
     ],
     limit: Annotated[int, Query(ge=1, le=100)] = 25,
-    source: Annotated[Literal["local", "reported", "docker"] | None, Query()] = None,
+    source: Annotated[
+        Literal["local", "reported", "docker", "project"] | None, Query()
+    ] = None,
 ) -> dict[str, object]:
     dashboard = metrics_store.dashboard(system_id, limit, source)
     if system_id == "backend-local" and source == "local":

@@ -1,0 +1,316 @@
+---
+const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
+---
+
+<section
+    id='project-manager'
+    data-api-base={apiBase}
+    class='rounded-2xl border border-white/10 bg-zinc-950/80 p-4'>
+    <div class='flex items-start justify-between gap-3'>
+        <div class='min-w-0'>
+            <p
+                class='text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500'>
+                Local projects
+            </p>
+            <h2 class='mt-1 text-base font-semibold text-white'>
+                Track a repository's own processes
+            </h2>
+            <p class='mt-1 text-xs text-zinc-500'>
+                Point CommitPulse at a local repo. It isolates and aggregates the
+                CPU, memory and uptime of that project's process tree.
+            </p>
+        </div>
+        <button
+            id='project-toggle'
+            type='button'
+            aria-expanded='false'
+            class='shrink-0 rounded-lg border border-emerald-200/25 bg-emerald-200/10 px-3 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-200/20'>
+            Track a project
+        </button>
+    </div>
+
+    <form
+        id='project-form'
+        hidden
+        class='mt-4 grid gap-3 border-t border-white/5 pt-4 sm:grid-cols-2'>
+        <label class='flex flex-col gap-1'>
+            <span class='text-[10px] uppercase tracking-[0.14em] text-zinc-600'>
+                Name
+            </span>
+            <input
+                id='project-name'
+                name='name'
+                type='text'
+                required
+                placeholder='My service'
+                class='rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-emerald-200/50'
+            />
+        </label>
+        <label class='flex flex-col gap-1'>
+            <span class='text-[10px] uppercase tracking-[0.14em] text-zinc-600'>
+                Local repository path
+            </span>
+            <input
+                id='project-path'
+                name='path'
+                type='text'
+                required
+                spellcheck='false'
+                placeholder='/home/you/code/my-service'
+                class='rounded-lg border border-white/10 bg-black/30 px-3 py-2 font-mono text-sm text-white outline-none focus:border-emerald-200/50'
+            />
+        </label>
+        <label class='flex flex-col gap-1 sm:col-span-2'>
+            <span class='text-[10px] uppercase tracking-[0.14em] text-zinc-600'>
+                Launch command (optional)
+            </span>
+            <input
+                id='project-command'
+                name='command'
+                type='text'
+                spellcheck='false'
+                placeholder='npm run dev'
+                class='rounded-lg border border-white/10 bg-black/30 px-3 py-2 font-mono text-sm text-white outline-none focus:border-emerald-200/50'
+            />
+        </label>
+        <div
+            class='flex flex-wrap items-center gap-4 text-xs text-zinc-400 sm:col-span-2'>
+            <label class='flex cursor-pointer items-center gap-2'>
+                <input
+                    id='project-match-cwd'
+                    type='checkbox'
+                    checked
+                    class='h-3.5 w-3.5 rounded accent-emerald-300'
+                />
+                Match processes by working directory
+            </label>
+            <label class='flex cursor-pointer items-center gap-2'>
+                <input
+                    id='project-match-cmdline'
+                    type='checkbox'
+                    class='h-3.5 w-3.5 rounded accent-emerald-300'
+                />
+                Also match by command line
+            </label>
+        </div>
+        <div class='flex items-center gap-3 sm:col-span-2'>
+            <button
+                type='submit'
+                class='rounded-lg border border-emerald-200/25 bg-emerald-200/10 px-4 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-200/20'>
+                Track project
+            </button>
+            <p
+                id='project-feedback'
+                class='text-xs text-zinc-500'>
+            </p>
+        </div>
+    </form>
+
+    <ul
+        id='project-list'
+        class='mt-4 space-y-2'
+        aria-live='polite'>
+    </ul>
+</section>
+
+<script>
+    type ProjectStatus = {
+        id: string;
+        name: string;
+        path: string;
+        command: string | null;
+        match_cwd: boolean;
+        match_cmdline: boolean;
+        active_processes: number;
+        launch_running: boolean;
+        launchable: boolean;
+    };
+    type ProjectsResponse = {
+        launch_enabled: boolean;
+        projects: ProjectStatus[];
+    };
+
+    const root = document.getElementById("project-manager")!;
+    const apiBase =
+        root.getAttribute("data-api-base") ||
+        `${window.location.protocol}//${window.location.hostname}:8000`;
+    const toggle = document.getElementById("project-toggle")!;
+    const form = document.getElementById("project-form") as HTMLFormElement;
+    const nameInput = document.getElementById("project-name") as HTMLInputElement;
+    const pathInput = document.getElementById("project-path") as HTMLInputElement;
+    const commandInput = document.getElementById(
+        "project-command",
+    ) as HTMLInputElement;
+    const matchCwd = document.getElementById(
+        "project-match-cwd",
+    ) as HTMLInputElement;
+    const matchCmdline = document.getElementById(
+        "project-match-cmdline",
+    ) as HTMLInputElement;
+    const feedback = document.getElementById("project-feedback")!;
+    const list = document.getElementById("project-list")!;
+
+    let launchEnabled = false;
+
+    const apiError = async (response: Response): Promise<string> => {
+        try {
+            const body = (await response.json()) as { detail?: string };
+            if (typeof body.detail === "string") return body.detail;
+        } catch {
+            /* ignore */
+        }
+        return `Request failed (${response.status})`;
+    };
+
+    const renderList = (projects: ProjectStatus[]): void => {
+        if (projects.length === 0) {
+            const empty = document.createElement("li");
+            empty.className = "text-xs text-zinc-600";
+            empty.textContent = "No local projects tracked yet.";
+            list.replaceChildren(empty);
+            return;
+        }
+        const items = projects.map((project) => {
+            const item = document.createElement("li");
+            item.className =
+                "flex flex-col gap-2 rounded-xl border border-white/10 bg-black/20 p-3 sm:flex-row sm:items-center sm:justify-between";
+
+            const info = document.createElement("div");
+            info.className = "min-w-0";
+            const title = document.createElement("p");
+            title.className = "truncate text-sm font-medium text-white";
+            title.textContent = project.name;
+            const meta = document.createElement("p");
+            meta.className = "truncate font-mono text-[11px] text-zinc-500";
+            meta.textContent = project.path;
+            info.append(title, meta);
+
+            const controls = document.createElement("div");
+            controls.className = "flex shrink-0 items-center gap-2";
+
+            const badge = document.createElement("span");
+            const active = project.active_processes > 0;
+            badge.className = `rounded-full border px-2.5 py-0.5 text-[10px] font-medium ${
+                active
+                    ? "border-emerald-200/25 bg-emerald-200/10 text-emerald-100"
+                    : "border-white/10 bg-zinc-900 text-zinc-400"
+            }`;
+            badge.textContent = active
+                ? `${project.active_processes} proc${project.active_processes === 1 ? "" : "s"}`
+                : "idle";
+            controls.append(badge);
+
+            if (project.launchable) {
+                const launchButton = document.createElement("button");
+                launchButton.type = "button";
+                launchButton.className =
+                    "rounded-lg border border-emerald-200/25 bg-emerald-200/10 px-2.5 py-1 text-[11px] font-medium text-emerald-100 transition hover:bg-emerald-200/20";
+                launchButton.textContent = project.launch_running
+                    ? "Restart"
+                    : "Launch";
+                launchButton.addEventListener("click", () =>
+                    void action(`/api/projects/${project.id}/launch`),
+                );
+                controls.append(launchButton);
+
+                if (project.launch_running) {
+                    const stopButton = document.createElement("button");
+                    stopButton.type = "button";
+                    stopButton.className =
+                        "rounded-lg border border-amber-400/25 bg-amber-950/40 px-2.5 py-1 text-[11px] font-medium text-amber-200 transition hover:bg-amber-900/40";
+                    stopButton.textContent = "Stop";
+                    stopButton.addEventListener("click", () =>
+                        void action(`/api/projects/${project.id}/terminate`),
+                    );
+                    controls.append(stopButton);
+                }
+            }
+
+            const removeButton = document.createElement("button");
+            removeButton.type = "button";
+            removeButton.className =
+                "rounded-lg border border-white/10 bg-zinc-900 px-2.5 py-1 text-[11px] font-medium text-zinc-300 transition hover:border-red-400/30 hover:text-red-200";
+            removeButton.textContent = "Remove";
+            removeButton.addEventListener("click", () =>
+                void removeProject(project.id),
+            );
+            controls.append(removeButton);
+
+            item.append(info, controls);
+            return item;
+        });
+        list.replaceChildren(...items);
+    };
+
+    const refresh = async (): Promise<void> => {
+        try {
+            const response = await fetch(`${apiBase}/api/projects`);
+            if (!response.ok) return;
+            const data = (await response.json()) as ProjectsResponse;
+            launchEnabled = data.launch_enabled;
+            renderList(data.projects);
+        } catch {
+            /* backend may be unavailable; the dashboard shows the error state */
+        }
+    };
+
+    const action = async (path: string): Promise<void> => {
+        try {
+            const response = await fetch(`${apiBase}${path}`, { method: "POST" });
+            if (!response.ok) feedback.textContent = await apiError(response);
+            else feedback.textContent = "";
+        } catch {
+            feedback.textContent = "Request failed.";
+        }
+        await refresh();
+    };
+
+    const removeProject = async (id: string): Promise<void> => {
+        try {
+            await fetch(`${apiBase}/api/projects/${id}`, { method: "DELETE" });
+        } catch {
+            /* ignore */
+        }
+        await refresh();
+    };
+
+    toggle.addEventListener("click", () => {
+        const open = form.hidden;
+        form.hidden = !open;
+        toggle.setAttribute("aria-expanded", String(open));
+        toggle.textContent = open ? "Close" : "Track a project";
+    });
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        feedback.textContent = "Adding…";
+        try {
+            const response = await fetch(`${apiBase}/api/projects`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: nameInput.value.trim(),
+                    path: pathInput.value.trim(),
+                    command: commandInput.value.trim() || null,
+                    match_cwd: matchCwd.checked,
+                    match_cmdline: matchCmdline.checked,
+                }),
+            });
+            if (!response.ok) {
+                feedback.textContent = await apiError(response);
+                return;
+            }
+            feedback.textContent = launchEnabled
+                ? "Tracking. Metrics appear once processes are detected."
+                : "Tracking. Start your project to see metrics.";
+            form.reset();
+            matchCwd.checked = true;
+            await refresh();
+        } catch {
+            feedback.textContent = "Could not reach the backend.";
+        }
+    });
+
+    void refresh();
+    window.setInterval(() => void refresh(), 5000);
+</script>
