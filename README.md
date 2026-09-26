@@ -3,8 +3,8 @@
 CommitPulse is a live performance dashboard that ties system and process metrics
 to the Git commit they were produced on. Instead of just showing "CPU is at
 40%", it records **who/what** was running (repository, branch, commit SHA and
-message) alongside CPU, memory, disk and network usage, then lets you compare how
-performance changed **from one commit to the next**.
+message) alongside CPU, memory, disk and network usage, then lets you compare
+how performance changed **from one commit to the next**.
 
 It watches four kinds of things out of the box:
 
@@ -24,8 +24,8 @@ updates in real time.
 
 - 📈 **Commit-aware metrics** – each sample carries repository, branch, commit
   SHA and message, and the dashboard rolls samples up per commit.
-- 🔀 **Commit comparison** – see the current commit's CPU/memory/disk against the
-  previous commit and per-commit averages.
+- 🔀 **Commit comparison** – see the current commit's CPU/memory/disk against
+  the previous commit and per-commit averages.
 - 🖥️ **Multi-source monitoring** – local host, reported systems, Docker
   containers and local project process trees, all in one system picker.
 - 🐳 **Docker support** – zero-dependency polling of the Docker Engine API over
@@ -56,11 +56,11 @@ broadcast to the Astro dashboard over a WebSocket.
 
 ## Tech stack
 
-| Layer    | Technology                                                      |
-| -------- | -------------------------------------------------------------- |
-| Frontend | Astro, Tailwind CSS v4, Chart.js, anime.js, TypeScript         |
-| Backend  | FastAPI, Uvicorn, Pydantic, psutil, httpx                      |
-| Storage  | SQLite (WAL mode)                                              |
+| Layer    | Technology                                             |
+| -------- | ------------------------------------------------------ |
+| Frontend | Astro, Tailwind CSS v4, Chart.js, anime.js, TypeScript |
+| Backend  | FastAPI, Uvicorn, Pydantic, psutil, httpx              |
+| Storage  | SQLite (WAL mode)                                      |
 
 ## Project structure
 
@@ -132,15 +132,15 @@ Open **http://localhost:4321**. Out of the box the dashboard will show the
 
 ## Metric sources
 
-Every sample is stored with a `source` label. The dashboard's system picker lists
-each `system_id · source` combination.
+Every sample is stored with a `source` label. The dashboard's system picker
+lists each `system_id · source` combination.
 
-| Source     | What it measures                                            | Default system id     |
-| ---------- | ---------------------------------------------------------- | --------------------- |
-| `local`    | The backend host, sampled with `psutil`                    | `backend-local`       |
-| `reported` | External systems that POST their own reports               | caller-defined        |
-| `docker`   | Each running Docker container                               | container name        |
-| `project`  | A local repository's isolated process tree                 | project slug          |
+| Source     | What it measures                             | Default system id |
+| ---------- | -------------------------------------------- | ----------------- |
+| `local`    | The backend host, sampled with `psutil`      | `backend-local`   |
+| `reported` | External systems that POST their own reports | caller-defined    |
+| `docker`   | Each running Docker container                | container name    |
+| `project`  | A local repository's isolated process tree   | project slug      |
 
 ### Local host (`local`)
 
@@ -195,19 +195,40 @@ Container stats map onto the shared metric schema as:
 - **Memory** – working-set usage vs. the container's memory limit.
 - **Network** – cumulative bytes sent/received across all container interfaces.
 - **Disk** – writable-layer size vs. total on-disk size (only when
-  `DOCKER_COLLECT_DISK_USAGE=true`, since it makes the daemon walk the filesystem
-  every poll).
+  `DOCKER_COLLECT_DISK_USAGE=true`, since it makes the daemon walk the
+  filesystem every poll).
 - **Uptime** – seconds since the container started.
 
 Commit identity is read from standard OCI image labels
 (`org.opencontainers.image.revision` / `.source` / `.version` / `.title`), so
-containers built by CI slot straight into commit comparisons.
+containers built by CI slot straight into commit comparisons. The monitor does
+not inspect the container filesystem or run Git inside it, so including a Git
+repository in the image or mounting one into the container is not enough by
+itself. Without a revision label, the reported commit SHA is `unknown` and the
+message defaults to `Docker container <name>`.
+
+Set labels when building or starting the container to report its commit
+metadata. For example, Docker Compose supports:
+
+```yaml
+services:
+    app:
+        image: my-app
+        labels:
+            org.opencontainers.image.revision: "${GIT_SHA}"
+            org.opencontainers.image.source: "${GIT_URL}"
+            org.opencontainers.image.version: "${GIT_BRANCH}"
+            commit_message: "${GIT_MESSAGE}"
+```
+
+The revision supplies the commit SHA; source identifies the repository, version
+supplies the branch, and `commit_message` supplies the commit message.
 
 ### Local project process trees (`project`)
 
 Point CommitPulse at a local repository and it isolates and aggregates the CPU,
-memory, disk I/O and uptime of **only that project's process tree**, recording it
-as a `project` system with the repository's Git `HEAD` as commit identity.
+memory, disk I/O and uptime of **only that project's process tree**, recording
+it as a `project` system with the repository's Git `HEAD` as commit identity.
 
 Processes are attributed to a project in two complementary ways:
 
@@ -230,28 +251,28 @@ Base URL: `http://localhost:8000`
 
 ### Metrics
 
-| Method | Path                                  | Description                                        |
-| ------ | ------------------------------------- | -------------------------------------------------- |
-| GET    | `/api/health`                         | Service health check.                              |
-| GET    | `/api/systems`                        | List every `system_id` + `source` with last-seen.  |
-| POST   | `/api/systems/{system_id}/metrics`    | Ingest a report for a system (source `reported`).   |
-| POST   | `/api/webhooks/metrics/{system_id}`   | Webhook alias for ingesting a report.               |
-| GET    | `/api/systems/{system_id}/metrics`    | Sample history (`?limit=`, `?source=`).             |
-| GET    | `/api/systems/{system_id}/dashboard`  | Per-commit rollups + current/previous comparison.  |
-| WS     | `/api/live`                           | WebSocket stream of `metrics.updated` events.       |
+| Method | Path                                 | Description                                       |
+| ------ | ------------------------------------ | ------------------------------------------------- |
+| GET    | `/api/health`                        | Service health check.                             |
+| GET    | `/api/systems`                       | List every `system_id` + `source` with last-seen. |
+| POST   | `/api/systems/{system_id}/metrics`   | Ingest a report for a system (source `reported`). |
+| POST   | `/api/webhooks/metrics/{system_id}`  | Webhook alias for ingesting a report.             |
+| GET    | `/api/systems/{system_id}/metrics`   | Sample history (`?limit=`, `?source=`).           |
+| GET    | `/api/systems/{system_id}/dashboard` | Per-commit rollups + current/previous comparison. |
+| WS     | `/api/live`                          | WebSocket stream of `metrics.updated` events.     |
 
 The `source` query filter accepts `local`, `reported`, `docker` or `project`.
 
 ### Projects
 
-| Method | Path                                | Description                                      |
-| ------ | ----------------------------------- | ------------------------------------------------ |
-| GET    | `/api/projects`                     | List tracked projects with live process counts.  |
-| POST   | `/api/projects`                     | Register a project to track.                     |
-| GET    | `/api/projects/{id}`                | Get one project's status.                        |
-| DELETE | `/api/projects/{id}`                | Stop tracking a project.                         |
-| POST   | `/api/projects/{id}/launch`         | Start the project's command.†                    |
-| POST   | `/api/projects/{id}/terminate`      | Stop the launched process.†                      |
+| Method | Path                           | Description                                     |
+| ------ | ------------------------------ | ----------------------------------------------- |
+| GET    | `/api/projects`                | List tracked projects with live process counts. |
+| POST   | `/api/projects`                | Register a project to track.                    |
+| GET    | `/api/projects/{id}`           | Get one project's status.                       |
+| DELETE | `/api/projects/{id}`           | Stop tracking a project.                        |
+| POST   | `/api/projects/{id}/launch`    | Start the project's command.†                   |
+| POST   | `/api/projects/{id}/terminate` | Stop the launched process.†                     |
 
 † Requires `PROJECTS_ALLOW_LAUNCH=true`.
 
@@ -276,18 +297,18 @@ are optional (`match_cwd` defaults to `true`).
 
 Reports (and stored samples) use these fields:
 
-| Field                                       | Type   | Notes                                  |
-| ------------------------------------------- | ------ | -------------------------------------- |
-| `repository_name`                           | string | Optional, ≤ 255 chars.                 |
-| `commit_sha`                                | string | Required, 7–64 chars.                  |
-| `commit_message`                            | string | Required, 1–500 chars.                 |
-| `branch`                                    | string | Optional, ≤ 255 chars.                 |
-| `timestamp`                                 | string | Optional ISO-8601; defaults to now (UTC). |
-| `cpu_percent`, `memory_percent`, `disk_percent` | number | 0–100.                             |
-| `memory_used_bytes`, `memory_total_bytes`   | int    | ≥ 0.                                   |
-| `disk_used_bytes`, `disk_total_bytes`       | int    | ≥ 0.                                   |
-| `network_sent_bytes`, `network_received_bytes` | int | ≥ 0.                                   |
-| `uptime_seconds`                            | number | ≥ 0.                                   |
+| Field                                           | Type   | Notes                                     |
+| ----------------------------------------------- | ------ | ----------------------------------------- |
+| `repository_name`                               | string | Optional, ≤ 255 chars.                    |
+| `commit_sha`                                    | string | Required, 7–64 chars.                     |
+| `commit_message`                                | string | Required, 1–500 chars.                    |
+| `branch`                                        | string | Optional, ≤ 255 chars.                    |
+| `timestamp`                                     | string | Optional ISO-8601; defaults to now (UTC). |
+| `cpu_percent`, `memory_percent`, `disk_percent` | number | 0–100.                                    |
+| `memory_used_bytes`, `memory_total_bytes`       | int    | ≥ 0.                                      |
+| `disk_used_bytes`, `disk_total_bytes`           | int    | ≥ 0.                                      |
+| `network_sent_bytes`, `network_received_bytes`  | int    | ≥ 0.                                      |
+| `uptime_seconds`                                | number | ≥ 0.                                      |
 
 ---
 
@@ -297,54 +318,54 @@ All backend settings are environment variables read at startup.
 
 ### General
 
-| Variable                 | Default                                             | Description                                            |
-| ------------------------ | --------------------------------------------------- | ------------------------------------------------------ |
-| `METRICS_DB_PATH`        | `backend/metrics.sqlite3`                           | SQLite database location.                              |
-| `METRICS_INTERVAL_SECONDS` | `5`                                               | Base sampling interval (seconds).                      |
-| `METRICS_WEBHOOK_SECRET` | _unset_                                             | If set, requires the `X-Webhook-Token` header.         |
-| `FRONTEND_ORIGINS`       | `http://localhost:4321,http://127.0.0.1:4321`       | Comma-separated CORS allow-list.                       |
+| Variable                   | Default                                       | Description                                    |
+| -------------------------- | --------------------------------------------- | ---------------------------------------------- |
+| `METRICS_DB_PATH`          | `backend/metrics.sqlite3`                     | SQLite database location.                      |
+| `METRICS_INTERVAL_SECONDS` | `5`                                           | Base sampling interval (seconds).              |
+| `METRICS_WEBHOOK_SECRET`   | _unset_                                       | If set, requires the `X-Webhook-Token` header. |
+| `FRONTEND_ORIGINS`         | `http://localhost:4321,http://127.0.0.1:4321` | Comma-separated CORS allow-list.               |
 
 ### Local host monitoring
 
-| Variable                   | Default | Description                                       |
-| -------------------------- | ------- | ------------------------------------------------- |
-| `METRICS_POLLING_ENABLED`  | `true`  | Sample the backend's own host.                    |
-| `METRICS_REPOSITORY_NAME`  | git     | Override the reported repository name.            |
-| `METRICS_COMMIT_SHA`       | git     | Override the reported commit SHA.                 |
-| `METRICS_COMMIT_MESSAGE`   | git     | Override the reported commit message.             |
-| `METRICS_BRANCH`           | git     | Override the reported branch.                     |
+| Variable                  | Default | Description                            |
+| ------------------------- | ------- | -------------------------------------- |
+| `METRICS_POLLING_ENABLED` | `true`  | Sample the backend's own host.         |
+| `METRICS_REPOSITORY_NAME` | git     | Override the reported repository name. |
+| `METRICS_COMMIT_SHA`      | git     | Override the reported commit SHA.      |
+| `METRICS_COMMIT_MESSAGE`  | git     | Override the reported commit message.  |
+| `METRICS_BRANCH`          | git     | Override the reported branch.          |
 
 ### Docker monitoring
 
-| Variable                    | Default                        | Description                                    |
-| --------------------------- | ------------------------------ | ---------------------------------------------- |
-| `DOCKER_MONITORING_ENABLED` | `true`                         | Poll running containers (self-disables if no daemon). |
-| `DOCKER_INTERVAL_SECONDS`   | `METRICS_INTERVAL_SECONDS`     | Container sampling interval.                    |
-| `DOCKER_COLLECT_DISK_USAGE` | `false`                        | Collect writable-layer disk sizes.             |
-| `DOCKER_SOCKET_PATH`        | `/var/run/docker.sock`         | Unix socket path.                              |
-| `DOCKER_HOST`               | _unset_                        | `unix://…` or `tcp://host:port` daemon address. |
+| Variable                    | Default                    | Description                                           |
+| --------------------------- | -------------------------- | ----------------------------------------------------- |
+| `DOCKER_MONITORING_ENABLED` | `true`                     | Poll running containers (self-disables if no daemon). |
+| `DOCKER_INTERVAL_SECONDS`   | `METRICS_INTERVAL_SECONDS` | Container sampling interval.                          |
+| `DOCKER_COLLECT_DISK_USAGE` | `false`                    | Collect writable-layer disk sizes.                    |
+| `DOCKER_SOCKET_PATH`        | `/var/run/docker.sock`     | Unix socket path.                                     |
+| `DOCKER_HOST`               | _unset_                    | `unix://…` or `tcp://host:port` daemon address.       |
 
 ### Project monitoring
 
-| Variable                    | Default                          | Description                                    |
-| --------------------------- | -------------------------------- | ---------------------------------------------- |
-| `PROJECT_MONITORING_ENABLED`| `true`                           | Track registered local projects.               |
-| `PROJECT_INTERVAL_SECONDS`  | `METRICS_INTERVAL_SECONDS`       | Project sampling interval.                     |
-| `PROJECTS_ALLOW_LAUNCH`     | `false`                          | Enable the launch/terminate endpoints.‡        |
-| `PROJECTS_CONFIG_PATH`      | `backend/tracked_projects.json`  | Where the project list is persisted.           |
-| `TRACKED_PROJECTS`          | _unset_                          | Seed projects at startup (see below).          |
+| Variable                     | Default                         | Description                             |
+| ---------------------------- | ------------------------------- | --------------------------------------- |
+| `PROJECT_MONITORING_ENABLED` | `true`                          | Track registered local projects.        |
+| `PROJECT_INTERVAL_SECONDS`   | `METRICS_INTERVAL_SECONDS`      | Project sampling interval.              |
+| `PROJECTS_ALLOW_LAUNCH`      | `false`                         | Enable the launch/terminate endpoints.‡ |
+| `PROJECTS_CONFIG_PATH`       | `backend/tracked_projects.json` | Where the project list is persisted.    |
+| `TRACKED_PROJECTS`           | _unset_                         | Seed projects at startup (see below).   |
 
-‡ The launch endpoints execute shell commands on the host — leave this off unless
-you trust every client of the API.
+‡ The launch endpoints execute shell commands on the host — leave this off
+unless you trust every client of the API.
 
-`TRACKED_PROJECTS` accepts either a JSON array of `{ "name", "path" }` objects or
-a comma-separated list of `name=/path` pairs, e.g.
+`TRACKED_PROJECTS` accepts either a JSON array of `{ "name", "path" }` objects
+or a comma-separated list of `name=/path` pairs, e.g.
 `TRACKED_PROJECTS="api=/srv/api,worker=/srv/worker"`.
 
 ### Frontend
 
-| Variable         | Default | Description                                                     |
-| ---------------- | ------- | -------------------------------------------------------------- |
+| Variable         | Default | Description                                                      |
+| ---------------- | ------- | ---------------------------------------------------------------- |
 | `PUBLIC_API_URL` | _unset_ | Build-time backend base URL when it isn't on the same host:8000. |
 
 ---
@@ -362,8 +383,8 @@ Run the backend with a production ASGI setup (for example
 
 ## Troubleshooting
 
-- **Dashboard says the API is unavailable** – make sure the backend is running on
-  port 8000 and that your origin is included in `FRONTEND_ORIGINS`.
+- **Dashboard says the API is unavailable** – make sure the backend is running
+  on port 8000 and that your origin is included in `FRONTEND_ORIGINS`.
 - **No Docker systems appear** – confirm the daemon is running and the socket is
   readable; the backend logs `Docker monitoring disabled` when it can't connect.
 - **A tracked project shows `idle`** – start the project (or enable
