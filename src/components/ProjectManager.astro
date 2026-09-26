@@ -2,116 +2,139 @@
 const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
 ---
 
-<section
-    id='project-manager'
+<div
+    id="project-manager"
     data-api-base={apiBase}
-    class='rounded-2xl border border-white/10 bg-zinc-950/80 p-4'>
-    <div class='flex items-start justify-between gap-3'>
-        <div class='min-w-0'>
-            <p
-                class='text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500'>
-                Local projects
-            </p>
-            <h2 class='mt-1 text-base font-semibold text-white'>
-                Track a repository's own processes
-            </h2>
-            <p class='mt-1 text-xs text-zinc-500'>
-                Point CommitPulse at a local repo. It isolates and aggregates the
-                CPU, memory and uptime of that project's process tree.
-            </p>
-        </div>
-        <button
-            id='project-toggle'
-            type='button'
-            aria-expanded='false'
-            class='shrink-0 rounded-lg border border-emerald-200/25 bg-emerald-200/10 px-3 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-200/20'>
-            Track a project
-        </button>
-    </div>
-
-    <form
-        id='project-form'
+    class="pointer-events-none fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3"
+>
+    <section
+        id="project-panel"
         hidden
-        class='mt-4 grid gap-3 border-t border-white/5 pt-4 sm:grid-cols-2'>
-        <label class='flex flex-col gap-1'>
-            <span class='text-[10px] uppercase tracking-[0.14em] text-zinc-600'>
-                Name
-            </span>
-            <input
-                id='project-name'
-                name='name'
-                type='text'
-                required
-                placeholder='My service'
-                class='rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-emerald-200/50'
-            />
-        </label>
-        <label class='flex flex-col gap-1'>
-            <span class='text-[10px] uppercase tracking-[0.14em] text-zinc-600'>
-                Local repository path
-            </span>
-            <input
-                id='project-path'
-                name='path'
-                type='text'
-                required
-                spellcheck='false'
-                placeholder='/home/you/code/my-service'
-                class='rounded-lg border border-white/10 bg-black/30 px-3 py-2 font-mono text-sm text-white outline-none focus:border-emerald-200/50'
-            />
-        </label>
-        <label class='flex flex-col gap-1 sm:col-span-2'>
-            <span class='text-[10px] uppercase tracking-[0.14em] text-zinc-600'>
-                Launch command (optional)
-            </span>
-            <input
-                id='project-command'
-                name='command'
-                type='text'
-                spellcheck='false'
-                placeholder='npm run dev'
-                class='rounded-lg border border-white/10 bg-black/30 px-3 py-2 font-mono text-sm text-white outline-none focus:border-emerald-200/50'
-            />
-        </label>
-        <div
-            class='flex flex-wrap items-center gap-4 text-xs text-zinc-400 sm:col-span-2'>
-            <label class='flex cursor-pointer items-center gap-2'>
-                <input
-                    id='project-match-cwd'
-                    type='checkbox'
-                    checked
-                    class='h-3.5 w-3.5 rounded accent-emerald-300'
-                />
-                Match processes by working directory
-            </label>
-            <label class='flex cursor-pointer items-center gap-2'>
-                <input
-                    id='project-match-cmdline'
-                    type='checkbox'
-                    class='h-3.5 w-3.5 rounded accent-emerald-300'
-                />
-                Also match by command line
-            </label>
-        </div>
-        <div class='flex items-center gap-3 sm:col-span-2'>
+        aria-label="Local project tracking"
+        class="project-panel pointer-events-auto max-h-[80vh] w-[min(92vw,26rem)] overflow-y-auto rounded-2xl border border-white/10 bg-zinc-950/95 p-4 shadow-2xl shadow-black/60 backdrop-blur"
+    >
+        <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+                <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                    Local projects
+                </p>
+                <h2 class="mt-1 text-base font-semibold text-white">
+                    Track a repository's own processes
+                </h2>
+            </div>
             <button
-                type='submit'
-                class='rounded-lg border border-emerald-200/25 bg-emerald-200/10 px-4 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-200/20'>
-                Track project
+                id="project-close"
+                type="button"
+                aria-label="Close"
+                class="shrink-0 rounded-lg border border-white/10 bg-black/30 px-2.5 py-1 text-sm text-zinc-400 transition hover:border-white/25 hover:text-white"
+            >
+                ✕
             </button>
-            <p
-                id='project-feedback'
-                class='text-xs text-zinc-500'>
-            </p>
         </div>
-    </form>
+        <p class="mt-1 text-xs text-zinc-500">
+            Point CommitPulse at a local repo. It isolates and aggregates the
+            CPU, memory and uptime of that project's process tree.
+        </p>
+        <button
+            id="project-toggle"
+            type="button"
+            aria-expanded="false"
+            class="mt-3 w-full rounded-lg border border-emerald-200/25 bg-emerald-200/10 px-3 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-200/20"
+        >
+            + Add a project
+        </button>
 
-    <ul
-        id='project-list'
-        class='mt-4 space-y-2'
-        aria-live='polite'>
-    </ul>
-</section>
+        <form
+            id="project-form"
+            hidden
+            class="mt-4 grid gap-3 border-t border-white/5 pt-4"
+        >
+            <label class="flex flex-col gap-1">
+                <span class="text-[10px] uppercase tracking-[0.14em] text-zinc-600">
+                    Name
+                </span>
+                <input
+                    id="project-name"
+                    name="name"
+                    type="text"
+                    required
+                    placeholder="My service"
+                    class="rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-emerald-200/50"
+                />
+            </label>
+            <label class="flex flex-col gap-1">
+                <span class="text-[10px] uppercase tracking-[0.14em] text-zinc-600">
+                    Local repository path
+                </span>
+                <input
+                    id="project-path"
+                    name="path"
+                    type="text"
+                    required
+                    spellcheck="false"
+                    placeholder="/home/you/code/my-service"
+                    class="rounded-lg border border-white/10 bg-black/30 px-3 py-2 font-mono text-sm text-white outline-none focus:border-emerald-200/50"
+                />
+            </label>
+            <label class="flex flex-col gap-1">
+                <span class="text-[10px] uppercase tracking-[0.14em] text-zinc-600">
+                    Launch command (optional)
+                </span>
+                <input
+                    id="project-command"
+                    name="command"
+                    type="text"
+                    spellcheck="false"
+                    placeholder="npm run dev"
+                    class="rounded-lg border border-white/10 bg-black/30 px-3 py-2 font-mono text-sm text-white outline-none focus:border-emerald-200/50"
+                />
+            </label>
+            <div class="flex flex-wrap items-center gap-4 text-xs text-zinc-400">
+                <label class="flex cursor-pointer items-center gap-2">
+                    <input
+                        id="project-match-cwd"
+                        type="checkbox"
+                        checked
+                        class="h-3.5 w-3.5 rounded accent-emerald-300"
+                    />
+                    Match processes by working directory
+                </label>
+                <label class="flex cursor-pointer items-center gap-2">
+                    <input
+                        id="project-match-cmdline"
+                        type="checkbox"
+                        class="h-3.5 w-3.5 rounded accent-emerald-300"
+                    />
+                    Also match by command line
+                </label>
+            </div>
+            <div class="flex items-center gap-3">
+                <button
+                    type="submit"
+                    class="rounded-lg border border-emerald-200/25 bg-emerald-200/10 px-4 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-200/20"
+                >
+                    Track project
+                </button>
+                <p id="project-feedback" class="text-xs text-zinc-500"></p>
+            </div>
+        </form>
+
+        <ul id="project-list" class="mt-4 space-y-2" aria-live="polite"></ul>
+    </section>
+
+    <button
+        id="project-launcher"
+        type="button"
+        aria-expanded="false"
+        aria-controls="project-panel"
+        class="pointer-events-auto flex items-center gap-2 rounded-full border border-emerald-200/25 bg-emerald-200/10 px-4 py-2.5 text-sm font-medium text-emerald-100 shadow-lg shadow-black/40 backdrop-blur transition hover:bg-emerald-200/20"
+    >
+        <span aria-hidden="true" class="text-base leading-none">
+            ◔
+        </span>
+        Track a project
+    </button>
+</div>
 
 <script>
     type ProjectStatus = {
@@ -136,8 +159,12 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
         `${window.location.protocol}//${window.location.hostname}:8000`;
     const toggle = document.getElementById("project-toggle")!;
     const form = document.getElementById("project-form") as HTMLFormElement;
-    const nameInput = document.getElementById("project-name") as HTMLInputElement;
-    const pathInput = document.getElementById("project-path") as HTMLInputElement;
+    const nameInput = document.getElementById(
+        "project-name",
+    ) as HTMLInputElement;
+    const pathInput = document.getElementById(
+        "project-path",
+    ) as HTMLInputElement;
     const commandInput = document.getElementById(
         "project-command",
     ) as HTMLInputElement;
@@ -149,6 +176,9 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
     ) as HTMLInputElement;
     const feedback = document.getElementById("project-feedback")!;
     const list = document.getElementById("project-list")!;
+    const launcher = document.getElementById("project-launcher")!;
+    const panel = document.getElementById("project-panel") as HTMLElement;
+    const closeButton = document.getElementById("project-close")!;
 
     let launchEnabled = false;
 
@@ -208,8 +238,9 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
                 launchButton.textContent = project.launch_running
                     ? "Restart"
                     : "Launch";
-                launchButton.addEventListener("click", () =>
-                    void action(`/api/projects/${project.id}/launch`),
+                launchButton.addEventListener(
+                    "click",
+                    () => void action(`/api/projects/${project.id}/launch`),
                 );
                 controls.append(launchButton);
 
@@ -219,8 +250,12 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
                     stopButton.className =
                         "rounded-lg border border-amber-400/25 bg-amber-950/40 px-2.5 py-1 text-[11px] font-medium text-amber-200 transition hover:bg-amber-900/40";
                     stopButton.textContent = "Stop";
-                    stopButton.addEventListener("click", () =>
-                        void action(`/api/projects/${project.id}/terminate`),
+                    stopButton.addEventListener(
+                        "click",
+                        () =>
+                            void action(
+                                `/api/projects/${project.id}/terminate`,
+                            ),
                     );
                     controls.append(stopButton);
                 }
@@ -231,8 +266,9 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
             removeButton.className =
                 "rounded-lg border border-white/10 bg-zinc-900 px-2.5 py-1 text-[11px] font-medium text-zinc-300 transition hover:border-red-400/30 hover:text-red-200";
             removeButton.textContent = "Remove";
-            removeButton.addEventListener("click", () =>
-                void removeProject(project.id),
+            removeButton.addEventListener(
+                "click",
+                () => void removeProject(project.id),
             );
             controls.append(removeButton);
 
@@ -256,7 +292,9 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
 
     const action = async (path: string): Promise<void> => {
         try {
-            const response = await fetch(`${apiBase}${path}`, { method: "POST" });
+            const response = await fetch(`${apiBase}${path}`, {
+                method: "POST",
+            });
             if (!response.ok) feedback.textContent = await apiError(response);
             else feedback.textContent = "";
         } catch {
@@ -274,11 +312,28 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
         await refresh();
     };
 
+    const setPanelOpen = (open: boolean): void => {
+        panel.hidden = !open;
+        launcher.hidden = open;
+        launcher.setAttribute("aria-expanded", String(open));
+        if (open) void refresh();
+    };
+
+    launcher.addEventListener("click", () => setPanelOpen(true));
+    closeButton.addEventListener("click", () => setPanelOpen(false));
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !panel.hidden) setPanelOpen(false);
+    });
+    document.addEventListener("click", (event) => {
+        if (panel.hidden) return;
+        if (!root.contains(event.target as Node)) setPanelOpen(false);
+    });
+
     toggle.addEventListener("click", () => {
         const open = form.hidden;
         form.hidden = !open;
         toggle.setAttribute("aria-expanded", String(open));
-        toggle.textContent = open ? "Close" : "Track a project";
+        toggle.textContent = open ? "Close form" : "+ Add a project";
     });
 
     form.addEventListener("submit", async (event) => {
@@ -311,6 +366,7 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
         }
     });
 
-    void refresh();
-    window.setInterval(() => void refresh(), 5000);
+    window.setInterval(() => {
+        if (!panel.hidden) void refresh();
+    }, 5000);
 </script>

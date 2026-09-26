@@ -17,7 +17,6 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
     <DashboardHeader />
     <div class="mx-auto max-w-7xl space-y-5 px-4 py-6 sm:px-6 lg:px-8">
         <RepositoryInfo />
-        <ProjectManager />
         <section class="dashboard-panel min-w-0 rounded-3xl border border-white/10 bg-zinc-950/80 p-5">
             <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
@@ -60,6 +59,8 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
             <CommitComparisonCard />
         </section>
     </div>
+
+    <ProjectManager />
 
     <script>
         import { animate, stagger } from "animejs";
