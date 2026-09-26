@@ -264,6 +264,22 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
                     `${comparison.branch || "branch unknown"} · ${new Date(current.timestamp).toLocaleString()}`,
                 );
 
+                const metricColors = {
+                    cpu: "#6ee7b7",
+                    memory: "#38bdf8",
+                    disk: "#fbbf24",
+                } as const;
+                const chipTone = {
+                    worse: "border-rose-400/25 bg-rose-500/[0.08]",
+                    better: "border-emerald-400/25 bg-emerald-500/[0.08]",
+                    neutral: "border-white/10 bg-zinc-900/70",
+                } as const;
+                const textTone = {
+                    worse: "text-rose-300",
+                    better: "text-emerald-300",
+                    neutral: "text-zinc-400",
+                } as const;
+
                 for (const [metric, label, value, prior, average] of [
                     [
                         "cpu",
@@ -287,14 +303,44 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
                         comparison.averages.disk_percent,
                     ],
                 ] as const) {
-                    const change =
-                        prior === undefined
-                            ? `avg ${average.toFixed(1)}%`
-                            : `${value - prior >= 0 ? "+" : ""}${(value - prior).toFixed(1)}%`;
-                    setCardText(
-                        `[data-delta='${metric}']`,
-                        `${label} ${change}`,
+                    const chip = card.querySelector(
+                        `[data-metric='${metric}']`,
                     );
+                    if (!chip) continue;
+                    const dot =
+                        chip.querySelector<HTMLElement>("[data-metric-dot]");
+                    if (dot) dot.style.backgroundColor = metricColors[metric];
+                    const labelEl = chip.querySelector("[data-metric-label]");
+                    if (labelEl) labelEl.textContent = label;
+                    const valueEl = chip.querySelector("[data-metric-value]");
+                    if (valueEl) valueEl.textContent = `${value.toFixed(1)}%`;
+
+                    let tone: "worse" | "better" | "neutral" = "neutral";
+                    let deltaText: string;
+                    if (prior === undefined) {
+                        deltaText = `avg ${average.toFixed(1)}%`;
+                    } else {
+                        const diff = value - prior;
+                        tone =
+                            diff > 0.05
+                                ? "worse"
+                                : diff < -0.05
+                                  ? "better"
+                                  : "neutral";
+                        const arrow =
+                            tone === "worse"
+                                ? "\u2191"
+                                : tone === "better"
+                                  ? "\u2193"
+                                  : "\u2192";
+                        deltaText = `${arrow} ${diff >= 0 ? "+" : ""}${diff.toFixed(1)}%`;
+                    }
+                    chip.className = `metric-chip flex min-w-0 flex-col gap-1 rounded-xl border p-2 ${chipTone[tone]}`;
+                    const deltaEl = chip.querySelector("[data-metric-delta]");
+                    if (deltaEl) {
+                        deltaEl.textContent = deltaText;
+                        deltaEl.className = `text-[10px] font-medium tabular-nums ${textTone[tone]}`;
+                    }
                 }
                 return card;
             });

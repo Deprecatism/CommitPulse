@@ -1,36 +1,96 @@
-<template id='commit-comparison-template'>
+<template id="commit-comparison-template">
     <article
-        data-motion='commit-card'
-        class='min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-black/30 p-4 transition duration-300 hover:-translate-y-0.5 hover:border-emerald-200/20'>
-        <div
-            class='grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(340px,0.8fr)] lg:items-center'>
-            <div class='min-w-0 space-y-1'>
+        data-motion="commit-card"
+        class="min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-black/30 p-4 transition duration-300 hover:-translate-y-0.5 hover:border-emerald-200/20"
+    >
+        <div class="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(340px,0.8fr)] lg:items-center">
+            <div class="min-w-0 space-y-1">
                 <p
                     data-commit-sha
-                    class='break-all font-mono text-[10px] text-zinc-500'>
-                </p>
+                    class="break-all font-mono text-[10px] text-zinc-500"
+                ></p>
                 <h3
                     data-commit-message
-                    class='break-words text-base font-semibold leading-snug text-white'>
-                </h3>
+                    class="break-words text-base font-semibold leading-snug text-white"
+                ></h3>
                 <p
                     data-commit-meta
-                    class='break-words text-xs text-zinc-500'>
-                </p>
+                    class="break-words text-xs text-zinc-500"
+                ></p>
             </div>
-            <div class='grid min-w-0 grid-cols-3 gap-2'>
-                <span
-                    data-delta='cpu'
-                    class='min-w-0 rounded-lg border border-white/10 bg-zinc-900 px-2 py-1.5 text-center text-[10px] font-medium tabular-nums text-zinc-300'>
-                </span>
-                <span
-                    data-delta='memory'
-                    class='min-w-0 rounded-lg border border-white/10 bg-zinc-900 px-2 py-1.5 text-center text-[10px] font-medium tabular-nums text-zinc-300'>
-                </span>
-                <span
-                    data-delta='disk'
-                    class='min-w-0 rounded-lg border border-white/10 bg-zinc-900 px-2 py-1.5 text-center text-[10px] font-medium tabular-nums text-zinc-300'>
-                </span>
+            <div class="grid min-w-0 grid-cols-3 gap-2">
+                <div
+                    data-metric="cpu"
+                    class="metric-chip flex min-w-0 flex-col gap-1 rounded-xl border border-white/10 bg-zinc-900/70 p-2"
+                >
+                    <span class="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
+                        <span
+                            data-metric-dot
+                            class="h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-500"
+                        ></span>
+                        <span data-metric-label>CPU</span>
+                    </span>
+                    <span
+                        data-metric-value
+                        class="text-sm font-semibold tabular-nums text-white"
+                    >
+                        --
+                    </span>
+                    <span
+                        data-metric-delta
+                        class="text-[10px] font-medium tabular-nums text-zinc-400"
+                    >
+                        --
+                    </span>
+                </div>
+                <div
+                    data-metric="memory"
+                    class="metric-chip flex min-w-0 flex-col gap-1 rounded-xl border border-white/10 bg-zinc-900/70 p-2"
+                >
+                    <span class="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
+                        <span
+                            data-metric-dot
+                            class="h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-500"
+                        ></span>
+                        <span data-metric-label>MEM</span>
+                    </span>
+                    <span
+                        data-metric-value
+                        class="text-sm font-semibold tabular-nums text-white"
+                    >
+                        --
+                    </span>
+                    <span
+                        data-metric-delta
+                        class="text-[10px] font-medium tabular-nums text-zinc-400"
+                    >
+                        --
+                    </span>
+                </div>
+                <div
+                    data-metric="disk"
+                    class="metric-chip flex min-w-0 flex-col gap-1 rounded-xl border border-white/10 bg-zinc-900/70 p-2"
+                >
+                    <span class="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
+                        <span
+                            data-metric-dot
+                            class="h-1.5 w-1.5 shrink-0 rounded-full bg-zinc-500"
+                        ></span>
+                        <span data-metric-label>DISK</span>
+                    </span>
+                    <span
+                        data-metric-value
+                        class="text-sm font-semibold tabular-nums text-white"
+                    >
+                        --
+                    </span>
+                    <span
+                        data-metric-delta
+                        class="text-[10px] font-medium tabular-nums text-zinc-400"
+                    >
+                        --
+                    </span>
+                </div>
             </div>
         </div>
     </article>
