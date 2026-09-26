@@ -13,7 +13,6 @@ from starlette.websockets import WebSocketDisconnect
 
 if __package__:
     from .docker_monitor import DockerMetricsMonitor
-    from .github_actions import router as github_router
     from .live_updates import LiveUpdateHub
     from .metrics_store import MetricsStore, SystemMetricsReport
     from .performance_monitor import SystemMetricsMonitor
@@ -22,7 +21,6 @@ if __package__:
     from .projects_api import router as projects_router
 else:
     from docker_monitor import DockerMetricsMonitor
-    from github_actions import router as github_router
     from live_updates import LiveUpdateHub
     from metrics_store import MetricsStore, SystemMetricsReport
     from performance_monitor import SystemMetricsMonitor
@@ -183,7 +181,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(github_router)
 app.include_router(projects_router)
 
 
