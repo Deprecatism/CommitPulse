@@ -309,16 +309,21 @@ class ProjectMetricsMonitor:
 
     # ------------------------------------------------------------- measurement
     def _self_process_tree(self) -> set[int]:
+        # Exclude the backend's own process, everything it spawned (git helpers,
+        # launched projects, etc.), and its immediate parent (the uvicorn
+        # --reload supervisor). The parent's *other* descendants are left alone
+        # so a project started from the same shell as the backend is still
+        # discovered.
         pids = {os.getpid()}
         try:
             me = psutil.Process()
             parent = me.parent()
-            for process in filter(None, (me, parent)):
-                pids.add(process.pid)
-                try:
-                    pids.update(child.pid for child in process.children(recursive=True))
-                except psutil.Error:
-                    continue
+            if parent is not None:
+                pids.add(parent.pid)
+            try:
+                pids.update(child.pid for child in me.children(recursive=True))
+            except psutil.Error:
+                pass
         except psutil.Error:
             pass
         return pids

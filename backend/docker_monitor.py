@@ -27,6 +27,7 @@ import re
 import threading
 from collections.abc import Callable
 from datetime import datetime, timezone
+from typing import Any
 
 import httpx
 
@@ -45,7 +46,7 @@ def _clamp_percent(value: float) -> float:
     return max(0.0, min(value, 100.0))
 
 
-def _cpu_percent(stats: dict[str, object]) -> float:
+def _cpu_percent(stats: dict[str, Any]) -> float:
     cpu = stats.get("cpu_stats") or {}
     precpu = stats.get("precpu_stats") or {}
     if not isinstance(cpu, dict) or not isinstance(precpu, dict):
@@ -61,7 +62,7 @@ def _cpu_percent(stats: dict[str, object]) -> float:
     return 0.0
 
 
-def _memory(stats: dict[str, object]) -> tuple[int, int, float]:
+def _memory(stats: dict[str, Any]) -> tuple[int, int, float]:
     memory = stats.get("memory_stats") or {}
     if not isinstance(memory, dict):
         return 0, 0, 0.0
@@ -84,7 +85,7 @@ def _memory(stats: dict[str, object]) -> tuple[int, int, float]:
     return used, limit, percent
 
 
-def _network(stats: dict[str, object]) -> tuple[int, int]:
+def _network(stats: dict[str, Any]) -> tuple[int, int]:
     networks = stats.get("networks") or {}
     if not isinstance(networks, dict):
         return 0, 0
@@ -226,7 +227,7 @@ class DockerMetricsMonitor:
             except Exception:
                 logger.exception("Failed to record Docker container metrics")
 
-    def _list_containers(self) -> list[dict[str, object]]:
+    def _list_containers(self) -> list[dict[str, Any]]:
         assert self._client is not None
         params = {"size": "1"} if self.collect_disk_usage else None
         response = self._client.get("/containers/json", params=params)
@@ -276,18 +277,18 @@ class DockerMetricsMonitor:
                 del self._started_at[cached_id]
 
     def _build_report(
-        self, container: dict[str, object], container_id: str
+        self, container: dict[str, Any], container_id: str
     ) -> tuple[str, SystemMetricsReport]:
         assert self._client is not None
         names = container.get("Names") or []
         name = str(names[0]) if isinstance(names, list) and names else container_id[:12]
         image = str(container.get("Image", "") or "")
         labels_value = container.get("Labels") or {}
-        labels = {
-            str(key): str(value)
-            for key, value in labels_value.items()
+        labels = (
+            {str(key): str(value) for key, value in labels_value.items()}
             if isinstance(labels_value, dict)
-        }
+            else {}
+        )
 
         stats_response = self._client.get(
             f"/containers/{container_id}/stats", params={"stream": "false"}

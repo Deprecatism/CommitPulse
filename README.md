@@ -82,6 +82,7 @@ The API will be available at:
 - http://localhost:8000/api/systems/{system_id}/metrics
 - http://localhost:8000/api/systems/{system_id}/dashboard
 - WebSocket: ws://localhost:8000/api/live
+- http://localhost:8000/api/projects
 - http://localhost:8000/api/github/config
 - http://localhost:8000/api/github/workflows?repo=owner/name
 - http://localhost:8000/api/github/runs?repo=owner/name
@@ -102,11 +103,75 @@ before startup to use a different SQLite database. Set
 reporting enabled. View history at `GET /api/systems/{system_id}/metrics`; the
 optional `source=local` or `source=reported` query filters it. Commit
 comparisons are available at `GET /api/systems/{system_id}/dashboard`. List
-systems and sources at `GET /api/systems`.
+systems and sources at `GET /api/systems`. The `source` filter accepts `local`,
+`reported`, `docker`, or `project`.
 
 Set `PUBLIC_API_URL` when building the frontend if the backend is not reachable
 on the same hostname at port 8000. Configure `FRONTEND_ORIGINS` as a comma-
 separated list of frontend origins when deploying away from localhost.
+
+## Docker container monitoring
+
+When a Docker daemon is reachable, the backend polls every running container and
+records it as its own system with source `docker`, using the same metric schema
+as everything else. It connects to the Docker Engine API over its unix socket
+(`/var/run/docker.sock`) or a `tcp://` `DOCKER_HOST`, so no extra dependency is
+needed. Container stats are mapped as:
+
+- CPU: fraction of total host CPU capacity used by the container (0-100).
+- Memory: working-set usage vs. the container's memory limit.
+- Network: cumulative bytes sent/received across all container interfaces.
+- Disk: writable-layer size vs. total on-disk size (only when
+  `DOCKER_COLLECT_DISK_USAGE=true`, since it makes the daemon walk the
+  filesystem on every poll).
+- Uptime: seconds since the container started.
+
+Commit identity is read from standard OCI image labels
+(`org.opencontainers.image.revision` / `.source` / `.version` / `.title`), so
+containers built by CI drop straight into CommitPulse's commit comparisons.
+
+Environment variables:
+
+- `DOCKER_MONITORING_ENABLED` (default `true`): the monitor disables itself
+  gracefully if the daemon cannot be reached.
+- `DOCKER_INTERVAL_SECONDS` (defaults to `METRICS_INTERVAL_SECONDS`).
+- `DOCKER_COLLECT_DISK_USAGE` (default `false`).
+- `DOCKER_SOCKET_PATH` / `DOCKER_HOST` to point at a non-default daemon.
+
+## Local project monitoring
+
+To track a repository you run locally, register it as a project and CommitPulse
+will isolate and aggregate the CPU, memory, disk I/O and uptime of that
+project's process tree, recording it as source `project` with the repository's
+Git `HEAD` as commit identity. Processes are attributed to a project by:
+
+- **Launched processes** – if the project defines a `command`, the backend can
+  spawn it in its own process group rooted at the repo, and tracks it plus every
+  descendant it forks.
+- **Discovered processes** – any process whose working directory is inside the
+  repository (optionally also matched by command line), plus its descendants.
+  The backend's own process tree is always excluded so it never measures itself.
+
+Manage projects from the dashboard's "Local projects" panel or via the REST API:
+
+- `GET /api/projects` — list tracked projects with live process counts.
+- `POST /api/projects` — `{ "name", "path", "command?", "match_cwd?",
+  "match_cmdline?" }` (the `path` must be an existing directory).
+- `DELETE /api/projects/{id}` — stop tracking.
+- `POST /api/projects/{id}/launch` and `.../terminate` — start/stop the
+  project's command (requires `PROJECTS_ALLOW_LAUNCH=true`).
+
+Environment variables:
+
+- `PROJECT_MONITORING_ENABLED` (default `true`).
+- `PROJECT_INTERVAL_SECONDS` (defaults to `METRICS_INTERVAL_SECONDS`).
+- `PROJECTS_ALLOW_LAUNCH` (default `false`): enables the launch/terminate
+  endpoints, which run the configured command. Leave it off unless you trust the
+  clients of the API, since it executes shell commands on the host.
+- `PROJECTS_CONFIG_PATH` (default `backend/tracked_projects.json`): where the
+  project list is persisted.
+- `TRACKED_PROJECTS`: seed projects at startup, either as a JSON array of
+  `{ "name", "path" }` objects or a comma-separated list of `name=/path` pairs.
 
 ## GitHub Actions dashboard
 

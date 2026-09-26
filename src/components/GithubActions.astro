@@ -6,111 +6,106 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
 ---
 
 <main
-    id='actions-root'
+    id="actions-root"
     data-api-base={apiBase}
-    class='min-h-screen bg-[#0a0a0a] text-white'>
+    class="min-h-screen bg-[#0a0a0a] text-white"
+>
     <GithubActionsHeader />
-    <div class='mx-auto max-w-7xl space-y-5 px-4 py-6 sm:px-6 lg:px-8'>
+    <div class="mx-auto max-w-7xl space-y-5 px-4 py-6 sm:px-6 lg:px-8">
         <p
-            id='auth-banner'
+            id="auth-banner"
             hidden
-            class='rounded-2xl border border-amber-400/25 bg-amber-950/30 px-4 py-3 text-xs text-amber-200'>
-        </p>
+            class="rounded-2xl border border-amber-400/25 bg-amber-950/30 px-4 py-3 text-xs text-amber-200"
+        ></p>
 
-        <div class='flex flex-col gap-5 lg:flex-row'>
+        <div class="flex flex-col gap-5 lg:flex-row">
             <aside
-                id='workflow-menu'
-                class='dashboard-panel min-w-0 space-y-5 lg:w-72 lg:shrink-0'>
-                <section
-                    class='rounded-3xl border border-white/10 bg-zinc-950/80 p-4'>
-                    <p
-                        class='text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500'>
+                id="workflow-menu"
+                class="dashboard-panel min-w-0 space-y-5 lg:w-72 lg:shrink-0"
+            >
+                <section class="rounded-3xl border border-white/10 bg-zinc-950/80 p-4">
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
                         Workflows
                     </p>
                     <ul
-                        id='workflow-list'
-                        class='mt-3 space-y-1.5'
-                        aria-live='polite'>
-                        <li class='text-xs text-zinc-500'>
+                        id="workflow-list"
+                        class="mt-3 space-y-1.5"
+                        aria-live="polite"
+                    >
+                        <li class="text-xs text-zinc-500">
                             Loading workflows…
                         </li>
                     </ul>
                 </section>
 
                 <section
-                    id='dispatch-panel'
+                    id="dispatch-panel"
                     hidden
-                    class='rounded-3xl border border-white/10 bg-zinc-950/80 p-4'>
-                    <p
-                        class='text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500'>
+                    class="rounded-3xl border border-white/10 bg-zinc-950/80 p-4"
+                >
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
                         Run workflow
                     </p>
                     <p
-                        id='dispatch-target'
-                        class='mt-2 truncate text-xs text-zinc-400'>
-                    </p>
-                    <form
-                        id='dispatch-form'
-                        class='mt-3 space-y-2'>
+                        id="dispatch-target"
+                        class="mt-2 truncate text-xs text-zinc-400"
+                    ></p>
+                    <form id="dispatch-form" class="mt-3 space-y-2">
                         <label
-                            for='dispatch-ref'
-                            class='block text-[10px] uppercase tracking-[0.14em] text-zinc-600'>
+                            for="dispatch-ref"
+                            class="block text-[10px] uppercase tracking-[0.14em] text-zinc-600"
+                        >
                             Git ref (branch or tag)
                         </label>
                         <input
-                            id='dispatch-ref'
-                            name='ref'
-                            type='text'
-                            value='main'
-                            autocomplete='off'
-                            spellcheck='false'
-                            class='w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 font-mono text-sm text-white outline-none focus:border-emerald-200/50'
+                            id="dispatch-ref"
+                            name="ref"
+                            type="text"
+                            value="main"
+                            autocomplete="off"
+                            spellcheck="false"
+                            class="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 font-mono text-sm text-white outline-none focus:border-emerald-200/50"
                         />
                         <button
-                            type='submit'
-                            class='w-full rounded-lg border border-emerald-200/25 bg-emerald-200/10 px-3 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-200/20'>
+                            type="submit"
+                            class="w-full rounded-lg border border-emerald-200/25 bg-emerald-200/10 px-3 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-200/20"
+                        >
                             Trigger run
                         </button>
                     </form>
                     <p
-                        id='dispatch-feedback'
-                        class='mt-2 text-[11px] text-zinc-500'>
-                    </p>
+                        id="dispatch-feedback"
+                        class="mt-2 text-[11px] text-zinc-500"
+                    ></p>
                 </section>
             </aside>
 
-            <section
-                class='dashboard-panel min-w-0 flex-1 rounded-3xl border border-white/10 bg-zinc-950/80 p-5'>
-                <div
-                    class='mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
+            <section class="dashboard-panel min-w-0 flex-1 rounded-3xl border border-white/10 bg-zinc-950/80 p-5">
+                <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <p
-                            class='text-xs uppercase tracking-[0.22em] text-zinc-500'>
+                        <p class="text-xs uppercase tracking-[0.22em] text-zinc-500">
                             Recent activity
                         </p>
                         <h2
-                            id='runs-heading'
-                            class='mt-2 text-2xl font-semibold text-white'>
+                            id="runs-heading"
+                            class="mt-2 text-2xl font-semibold text-white"
+                        >
                             All workflow runs
                         </h2>
-                        <p
-                            id='runs-context'
-                            class='mt-2 text-sm text-zinc-400'>
+                        <p id="runs-context" class="mt-2 text-sm text-zinc-400">
                             Select a repository to load its GitHub Actions runs.
                         </p>
                     </div>
                     <button
-                        id='refresh-runs'
-                        type='button'
-                        class='self-start rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-zinc-300 transition hover:border-emerald-200/25 hover:text-white sm:self-auto'>
+                        id="refresh-runs"
+                        type="button"
+                        class="self-start rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-zinc-300 transition hover:border-emerald-200/25 hover:text-white sm:self-auto"
+                    >
                         Refresh
                     </button>
                 </div>
-                <div
-                    id='run-list'
-                    class='space-y-3'
-                    aria-live='polite'>
-                    <p class='text-sm text-zinc-500'>
+                <div id="run-list" class="space-y-3" aria-live="polite">
+                    <p class="text-sm text-zinc-500">
                         Waiting for workflow runs.
                     </p>
                 </div>
@@ -168,7 +163,11 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
             completed_at: string | null;
             html_url: string | null;
         };
-        type JobsResponse = { run_id: number; total_count: number; jobs: Job[] };
+        type JobsResponse = {
+            run_id: number;
+            total_count: number;
+            jobs: Job[];
+        };
         type ConfigResponse = {
             authenticated: boolean;
             default_repo: string | null;
@@ -423,7 +422,9 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
                 renderRunJobs(container, data.jobs);
             } catch (error) {
                 container.textContent =
-                    error instanceof Error ? error.message : "Could not load jobs.";
+                    error instanceof Error
+                        ? error.message
+                        : "Could not load jobs.";
             }
         };
 
@@ -453,7 +454,9 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
         };
 
         const buildRunCard = (run: WorkflowRun): DocumentFragment => {
-            const card = runTemplate.content.cloneNode(true) as DocumentFragment;
+            const card = runTemplate.content.cloneNode(
+                true,
+            ) as DocumentFragment;
             const style = statusStyle(run);
             const set = (selector: string, value: string): void => {
                 const element = card.querySelector(selector);
@@ -489,10 +492,7 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
                 badge.className = `rounded-full border px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.12em] ${style.badge}`;
             }
             set("[data-run-branch]", run.head_branch || "unknown branch");
-            set(
-                "[data-run-sha]",
-                run.head_sha ? run.head_sha.slice(0, 7) : "",
-            );
+            set("[data-run-sha]", run.head_sha ? run.head_sha.slice(0, 7) : "");
 
             const view = card.querySelector(
                 "[data-action='view']",
@@ -558,7 +558,8 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
             if (runs.length === 0) {
                 const empty = document.createElement("p");
                 empty.className = "text-sm text-zinc-500";
-                empty.textContent = "No workflow runs found for this selection.";
+                empty.textContent =
+                    "No workflow runs found for this selection.";
                 runList.replaceChildren(empty);
                 return;
             }
@@ -750,10 +751,10 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
                 );
         };
 
-        menuToggle.addEventListener("click", () =>
-            setMenuOpen(menu.hidden),
+        menuToggle.addEventListener("click", () => setMenuOpen(!!menu.hidden));
+        liveToggle.addEventListener("click", () =>
+            setAutoRefresh(!autoRefresh),
         );
-        liveToggle.addEventListener("click", () => setAutoRefresh(!autoRefresh));
         refreshButton.addEventListener("click", () => void loadRuns());
         repoForm.addEventListener("submit", (event) => {
             event.preventDefault();
