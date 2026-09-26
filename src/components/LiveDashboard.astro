@@ -1,0 +1,453 @@
+---
+const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
+---
+
+<main
+    id='dashboard'
+    data-api-base={apiBase}
+    class='min-h-screen bg-[#0a0a0a] px-4 py-6 text-white sm:px-6 lg:px-8'>
+    <div class='mx-auto max-w-7xl'>
+        <header
+            class='mb-8 rounded-3xl border border-white/10 bg-zinc-950/80 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.45)]'>
+            <div
+                class='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
+                <div class='flex items-center gap-3'>
+                    <div
+                        class='flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white text-lg font-black text-black'>
+                        CP
+                    </div>
+                    <div>
+                        <p
+                            class='text-[10px] font-semibold uppercase tracking-[0.32em] text-zinc-400'>
+                            CommitPulse
+                        </p>
+                        <h1 class='mt-1 text-xl font-semibold text-white'>
+                            Commit performance
+                        </h1>
+                    </div>
+                </div>
+                <div class='flex flex-wrap items-center gap-3'>
+                    <label
+                        for='system-select'
+                        class='text-xs uppercase tracking-[0.16em] text-zinc-400'
+                        >System</label
+                    >
+                    <select
+                        id='system-select'
+                        class='min-w-52 rounded-xl border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-zinc-500'>
+                        <option value=''>Waiting for reports</option>
+                    </select>
+                    <span
+                        id='connection-state'
+                        role='status'
+                        aria-live='polite'
+                        class='rounded-full border border-white/10 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300'
+                        >Connecting</span
+                    >
+                </div>
+            </div>
+        </header>
+
+        <section
+            class='mb-5 rounded-3xl border border-white/10 bg-zinc-950/80 p-5'>
+            <div
+                class='mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
+                <div>
+                    <p
+                        class='text-xs uppercase tracking-[0.22em] text-zinc-500'>
+                        Current statistics
+                    </p>
+                    <h2 class='mt-2 text-2xl font-semibold text-white'>
+                        Latest system snapshot
+                    </h2>
+                    <p
+                        id='commit-context'
+                        class='mt-2 text-sm text-zinc-400'>
+                        Waiting for a system report
+                    </p>
+                </div>
+                <p
+                    id='snapshot-time'
+                    class='text-xs text-zinc-500'>
+                </p>
+            </div>
+            <div class='grid gap-3 md:grid-cols-2 xl:grid-cols-5'>
+                <div
+                    class='rounded-2xl border border-white/10 bg-zinc-900/80 p-3'>
+                    <p
+                        class='text-[10px] uppercase tracking-[0.18em] text-zinc-500'>
+                        CPU
+                    </p><div
+                        id='cpu-current'
+                        class='mt-2 text-2xl font-bold'>
+                        --
+                    </div><div
+                        id='cpu-previous'
+                        class='mt-1 text-xs text-zinc-400'>
+                        previous --
+                    </div>
+                </div>
+                <div
+                    class='rounded-2xl border border-white/10 bg-zinc-900/80 p-3'>
+                    <p
+                        class='text-[10px] uppercase tracking-[0.18em] text-zinc-500'>
+                        Memory
+                    </p><div
+                        id='memory-current'
+                        class='mt-2 text-2xl font-bold'>
+                        --
+                    </div><div
+                        id='memory-previous'
+                        class='mt-1 text-xs text-zinc-400'>
+                        previous --
+                    </div>
+                </div>
+                <div
+                    class='rounded-2xl border border-white/10 bg-zinc-900/80 p-3'>
+                    <p
+                        class='text-[10px] uppercase tracking-[0.18em] text-zinc-500'>
+                        Disk
+                    </p><div
+                        id='disk-current'
+                        class='mt-2 text-2xl font-bold'>
+                        --
+                    </div><div
+                        id='disk-previous'
+                        class='mt-1 text-xs text-zinc-400'>
+                        previous --
+                    </div>
+                </div>
+                <div
+                    class='rounded-2xl border border-white/10 bg-zinc-900/80 p-3'>
+                    <p
+                        class='text-[10px] uppercase tracking-[0.18em] text-zinc-500'>
+                        Network total
+                    </p><div
+                        id='network-current'
+                        class='mt-2 text-2xl font-bold'>
+                        --
+                    </div><div
+                        id='network-previous'
+                        class='mt-1 text-xs text-zinc-400'>
+                        previous --
+                    </div>
+                </div>
+                <div
+                    class='rounded-2xl border border-white/10 bg-zinc-900/80 p-3'>
+                    <p
+                        class='text-[10px] uppercase tracking-[0.18em] text-zinc-500'>
+                        Uptime
+                    </p><div
+                        id='uptime-current'
+                        class='mt-2 text-2xl font-bold'>
+                        --
+                    </div><div
+                        id='uptime-previous'
+                        class='mt-1 text-xs text-zinc-400'>
+                        previous --
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class='rounded-3xl border border-white/10 bg-zinc-950/80 p-5'>
+            <div class='mb-5'>
+                <p class='text-xs uppercase tracking-[0.22em] text-zinc-500'>
+                    Commit comparison
+                </p>
+                <h2 class='mt-2 text-2xl font-semibold text-white'>
+                    Previous vs current commit
+                </h2>
+            </div>
+            <div
+                id='commit-list'
+                class='space-y-3'
+                aria-live='polite'>
+                <p class='text-sm text-zinc-500'>
+                    Waiting for commit-linked metrics.
+                </p>
+            </div>
+        </section>
+    </div>
+</main>
+
+<script>
+    type MetricSnapshot = {
+        system_id: string;
+        source: "local" | "reported";
+        commit_sha: string;
+        commit_message: string;
+        branch: string | null;
+        timestamp: string;
+        cpu_percent: number;
+        memory_percent: number;
+        disk_percent: number;
+        network_sent_bytes: number;
+        network_received_bytes: number;
+        uptime_seconds: number;
+    };
+    type SystemEntry = {
+        system_id: string;
+        source: "local" | "reported";
+        last_reported_at: string;
+    };
+    type CommitComparison = {
+        commit_sha: string;
+        commit_message: string;
+        branch: string | null;
+        current: MetricSnapshot;
+        previous: MetricSnapshot | null;
+    };
+    type DashboardResponse = {
+        current: MetricSnapshot | null;
+        previous: MetricSnapshot | null;
+        commits: CommitComparison[];
+    };
+
+    const root = document.getElementById("dashboard");
+    const systemSelect = document.getElementById(
+        "system-select",
+    ) as HTMLSelectElement;
+    const connectionState = document.getElementById("connection-state")!;
+    const apiBase =
+        root?.getAttribute("data-api-base") ||
+        `${window.location.protocol}//${window.location.hostname}:8000`;
+
+    const selectedSystem = (): { systemId: string; source: string } | null => {
+        const [systemId, source] = systemSelect.value.split("|");
+        return systemId && source ? { systemId, source } : null;
+    };
+    const setText = (id: string, value: string): void => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = value;
+    };
+    const formatBytes = (value: number): string => {
+        if (value >= 1024 ** 3) return `${(value / 1024 ** 3).toFixed(1)} GB`;
+        if (value >= 1024 ** 2) return `${(value / 1024 ** 2).toFixed(1)} MB`;
+        if (value >= 1024) return `${(value / 1024).toFixed(1)} KB`;
+        return `${value.toFixed(0)} B`;
+    };
+    const formatUptime = (seconds: number): string =>
+        `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
+    const percentPrevious = (value: number, previous: number | null): string =>
+        previous === null ?
+            "previous unavailable"
+        :   `previous ${previous.toFixed(1)}% (${value - previous >= 0 ? "+" : ""}${(value - previous).toFixed(1)}%)`;
+    const bytePrevious = (value: number, previous: number | null): string =>
+        previous === null ?
+            "previous unavailable"
+        :   `previous ${formatBytes(previous)} (${value - previous >= 0 ? "+" : "-"}${formatBytes(Math.abs(value - previous))})`;
+
+    const renderComparisons = (commits: CommitComparison[]): void => {
+        const list = document.getElementById("commit-list")!;
+        if (commits.length === 0) {
+            const empty = document.createElement("p");
+            empty.className = "text-sm text-zinc-500";
+            empty.textContent = "No commit-linked reports for this system yet.";
+            list.replaceChildren(empty);
+            return;
+        }
+        const articles = commits.map(
+            ({ current, previous, commit_sha, commit_message, branch }) => {
+                const article = document.createElement("article");
+                article.className =
+                    "rounded-2xl border border-white/10 bg-black/30 p-4";
+                const header = document.createElement("div");
+                header.className =
+                    "flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between";
+                const details = document.createElement("div");
+                details.className = "min-w-0";
+                const sha = document.createElement("p");
+                sha.className =
+                    "text-[10px] uppercase tracking-[0.2em] text-zinc-500";
+                sha.textContent = commit_sha;
+                const message = document.createElement("h3");
+                message.className = "mt-1 text-base font-semibold text-white";
+                message.textContent = commit_message;
+                const meta = document.createElement("p");
+                meta.className = "mt-1 text-xs text-zinc-500";
+                meta.textContent = `${branch || "branch unknown"} · ${new Date(current.timestamp).toLocaleString()}`;
+                details.append(sha, message, meta);
+
+                const badges = document.createElement("div");
+                badges.className = "flex flex-wrap items-center gap-2";
+                for (const [label, value, prior] of [
+                    ["CPU", current.cpu_percent, previous?.cpu_percent],
+                    ["MEM", current.memory_percent, previous?.memory_percent],
+                    ["DISK", current.disk_percent, previous?.disk_percent],
+                ] as const) {
+                    const badge = document.createElement("span");
+                    badge.className =
+                        "rounded-full border border-white/10 bg-zinc-900 px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] text-zinc-300";
+                    const change =
+                        prior === undefined ? "baseline" : (
+                            `${value - prior >= 0 ? "+" : ""}${(value - prior).toFixed(1)}%`
+                        );
+                    badge.textContent = `${label} ${change}`;
+                    badges.append(badge);
+                }
+                header.append(details, badges);
+                article.append(header);
+                return article;
+            },
+        );
+        list.replaceChildren(...articles);
+    };
+
+    const renderDashboard = (data: DashboardResponse): void => {
+        const { current, previous } = data;
+        if (!current) {
+            setText("commit-context", "Waiting for a system report");
+            setText("snapshot-time", "");
+            for (const metric of ["cpu", "memory", "disk", "network", "uptime"])
+                setText(`${metric}-current`, "--");
+            renderComparisons([]);
+            return;
+        }
+        const network =
+            current.network_sent_bytes + current.network_received_bytes;
+        const previousNetwork =
+            previous ?
+                previous.network_sent_bytes + previous.network_received_bytes
+            :   null;
+        setText(
+            "commit-context",
+            `${current.commit_message} · ${current.commit_sha}`,
+        );
+        setText(
+            "snapshot-time",
+            `Updated ${new Date(current.timestamp).toLocaleString()}`,
+        );
+        setText("cpu-current", `${current.cpu_percent.toFixed(1)}%`);
+        setText(
+            "cpu-previous",
+            percentPrevious(current.cpu_percent, previous?.cpu_percent ?? null),
+        );
+        setText("memory-current", `${current.memory_percent.toFixed(1)}%`);
+        setText(
+            "memory-previous",
+            percentPrevious(
+                current.memory_percent,
+                previous?.memory_percent ?? null,
+            ),
+        );
+        setText("disk-current", `${current.disk_percent.toFixed(1)}%`);
+        setText(
+            "disk-previous",
+            percentPrevious(
+                current.disk_percent,
+                previous?.disk_percent ?? null,
+            ),
+        );
+        setText("network-current", formatBytes(network));
+        setText("network-previous", bytePrevious(network, previousNetwork));
+        setText("uptime-current", formatUptime(current.uptime_seconds));
+        setText(
+            "uptime-previous",
+            previous ?
+                `previous ${formatUptime(previous.uptime_seconds)}`
+            :   "previous unavailable",
+        );
+        renderComparisons(data.commits);
+    };
+
+    const refreshDashboard = async (): Promise<void> => {
+        const selected = selectedSystem();
+        if (!selected) return;
+        const query = new URLSearchParams({
+            source: selected.source,
+            limit: "25",
+        });
+        const response = await fetch(
+            `${apiBase}/api/systems/${encodeURIComponent(selected.systemId)}/dashboard?${query}`,
+        );
+        if (!response.ok)
+            throw new Error(`Dashboard request failed (${response.status})`);
+        renderDashboard((await response.json()) as DashboardResponse);
+    };
+
+    const refreshSystems = async (preferredKey?: string): Promise<void> => {
+        const oldValue = systemSelect.value;
+        const response = await fetch(`${apiBase}/api/systems`);
+        if (!response.ok)
+            throw new Error(`Systems request failed (${response.status})`);
+        const systems = (await response.json()) as SystemEntry[];
+        systems.sort(
+            (left, right) =>
+                Date.parse(right.last_reported_at) -
+                Date.parse(left.last_reported_at),
+        );
+        const options = systems.map((system) => {
+            const option = document.createElement("option");
+            option.value = `${system.system_id}|${system.source}`;
+            option.textContent = `${system.system_id} · ${system.source}`;
+            return option;
+        });
+        if (options.length === 0) {
+            const empty = document.createElement("option");
+            empty.value = "";
+            empty.textContent = "Waiting for reports";
+            options.push(empty);
+        }
+        systemSelect.replaceChildren(...options);
+        systemSelect.value =
+            options.some((option) => option.value === preferredKey) ?
+                preferredKey!
+            : options.some((option) => option.value === oldValue) ? oldValue
+            : options[0].value;
+        await refreshDashboard();
+    };
+
+    function showConnectionError(error: unknown): void {
+        connectionState.textContent = "API unavailable";
+        connectionState.className =
+            "rounded-full border border-red-400/30 bg-red-950/50 px-3 py-1.5 text-xs text-red-200";
+        console.error(error);
+    }
+
+    systemSelect.addEventListener(
+        "change",
+        () => void refreshDashboard().catch(showConnectionError),
+    );
+    const connectLive = (): void => {
+        connectionState.textContent = "Connecting";
+        const socketUrl = new URL("/api/live", apiBase);
+        socketUrl.protocol = socketUrl.protocol === "https:" ? "wss:" : "ws:";
+        const socket = new WebSocket(socketUrl);
+        socket.addEventListener("open", () => {
+            connectionState.textContent = "Live";
+            connectionState.className =
+                "rounded-full border border-emerald-400/30 bg-emerald-950/40 px-3 py-1.5 text-xs text-emerald-200";
+        });
+        socket.addEventListener("message", (message) => {
+            try {
+                const event = JSON.parse(message.data) as {
+                    type: string;
+                    data?: MetricSnapshot;
+                };
+                if (event.type !== "metrics.updated" || !event.data) return;
+                const selected = selectedSystem();
+                const eventKey = `${event.data.system_id}|${event.data.source}`;
+                const currentKey =
+                    selected ? `${selected.systemId}|${selected.source}` : "";
+                void refreshSystems(
+                    !currentKey || currentKey === eventKey ?
+                        eventKey
+                    :   undefined,
+                ).catch(showConnectionError);
+            } catch (error) {
+                console.error("Invalid live update", error);
+            }
+        });
+        socket.addEventListener("close", () => {
+            connectionState.textContent = "Reconnecting";
+            connectionState.className =
+                "rounded-full border border-amber-400/30 bg-amber-950/40 px-3 py-1.5 text-xs text-amber-200";
+            window.setTimeout(connectLive, 2000);
+        });
+        socket.addEventListener("error", () => socket.close());
+    };
+
+    void refreshSystems().catch(showConnectionError);
+    connectLive();
+</script>

@@ -1,0 +1,35 @@
+---
+import "../styles/global.css";
+---
+
+<!doctype html>
+<html lang='en'>
+    <head>
+        <meta charset='utf-8' />
+        <meta
+            name='viewport'
+            content='width=device-width'
+        />
+        <meta
+            name='description'
+            content='CommitPulse dashboard for tracking the average performance of GitHub commits, review latency, and merge quality.'
+        />
+        <link
+            rel='icon'
+            type='image/svg+xml'
+            href='/favicon.svg'
+        />
+        <link
+            rel='icon'
+            href='/favicon.ico'
+        />
+        <meta
+            name='generator'
+            content={Astro.generator}
+        />
+        <title>CommitPulse | Commit Performance</title>
+    </head>
+    <body class='min-h-screen bg-slate-950 text-slate-50 antialiased'>
+        <slot />
+    </body>
+</html>
