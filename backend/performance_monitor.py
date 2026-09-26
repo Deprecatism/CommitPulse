@@ -25,6 +25,7 @@ class SystemMetricsMonitor:
         commit_metadata_provider: Callable[[], tuple[str, str, str | None]]
         | None = None,
         on_sample: Callable[[dict[str, object]], None] | None = None,
+        repository_name: str | None = None,
     ) -> None:
         if interval_seconds <= 0:
             raise ValueError("interval_seconds must be greater than zero")
@@ -37,6 +38,7 @@ class SystemMetricsMonitor:
         self.branch = branch
         self.commit_metadata_provider = commit_metadata_provider
         self.on_sample = on_sample
+        self.repository_name = repository_name
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
 
@@ -78,6 +80,7 @@ class SystemMetricsMonitor:
             else (self.commit_sha, self.commit_message, self.branch)
         )
         report = SystemMetricsReport(
+            repository_name=self.repository_name,
             commit_sha=commit_sha,
             commit_message=commit_message,
             branch=branch,

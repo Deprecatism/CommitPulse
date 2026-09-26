@@ -13,7 +13,9 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
+    "animejs": "^4.5.0",
     "astro": "^7.3.5",
+    "chart.js": "^4.5.1",
     "tailwindcss": "^4.3.3"
   },
   "allowScripts": {

@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class SystemMetricsReport(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    repository_name: str | None = Field(default=None, max_length=255)
     commit_sha: str = Field(min_length=7, max_length=64)
     commit_message: str = Field(min_length=1, max_length=500)
     branch: str | None = Field(default=None, max_length=255)
@@ -45,6 +46,7 @@ class MetricsStore:
                     CREATE TABLE IF NOT EXISTS system_usage_reports (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         system_id TEXT NOT NULL,
+                        repository_name TEXT,
                         source TEXT NOT NULL DEFAULT 'reported',
                         commit_sha TEXT NOT NULL DEFAULT 'unknown',
                         commit_message TEXT NOT NULL DEFAULT '',
@@ -73,6 +75,10 @@ class MetricsStore:
                 connection.execute(
                     "ALTER TABLE system_usage_reports "
                     "ADD COLUMN source TEXT NOT NULL DEFAULT 'reported'"
+                )
+            if "repository_name" not in columns:
+                connection.execute(
+                    "ALTER TABLE system_usage_reports ADD COLUMN repository_name TEXT"
                 )
             if "commit_sha" not in columns:
                 connection.execute(
@@ -116,13 +122,15 @@ class MetricsStore:
             cursor = connection.execute(
                 """
                     INSERT INTO system_usage_reports (
-                        system_id, source, commit_sha, commit_message, branch, timestamp,
+                        system_id, repository_name, source, commit_sha, commit_message,
+                        branch, timestamp,
                         cpu_percent, memory_percent,
                         memory_used_bytes, memory_total_bytes, disk_percent,
                         disk_used_bytes, disk_total_bytes, network_sent_bytes,
                         network_received_bytes, uptime_seconds
                     ) VALUES (
-                        :system_id, :source, :commit_sha, :commit_message, :branch,
+                        :system_id, :repository_name, :source, :commit_sha,
+                        :commit_message, :branch,
                         :timestamp, :cpu_percent, :memory_percent,
                         :memory_used_bytes, :memory_total_bytes, :disk_percent,
                         :disk_used_bytes, :disk_total_bytes, :network_sent_bytes,
@@ -145,7 +153,8 @@ class MetricsStore:
             connection.row_factory = sqlite3.Row
             rows = connection.execute(
                 """
-                  SELECT id, source, commit_sha, commit_message, branch, timestamp,
+                  SELECT id, repository_name, source, commit_sha, commit_message,
+                      branch, timestamp,
                       cpu_percent, memory_percent, memory_used_bytes, memory_total_bytes,
                       disk_percent, disk_used_bytes,
                        disk_total_bytes, network_sent_bytes, network_received_bytes,
@@ -170,11 +179,21 @@ class MetricsStore:
             rows = connection.execute(
                 """
                 SELECT * FROM (
-                    SELECT system_id, source, commit_sha, commit_message, branch,
+                          SELECT system_id, repository_name, source, commit_sha,
+                              commit_message, branch,
                            timestamp, cpu_percent, memory_percent,
                            memory_used_bytes, memory_total_bytes, disk_percent,
                            disk_used_bytes, disk_total_bytes, network_sent_bytes,
                            network_received_bytes, uptime_seconds,
+                           AVG(cpu_percent) OVER (
+                               PARTITION BY source, commit_sha
+                           ) AS average_cpu_percent,
+                           AVG(memory_percent) OVER (
+                               PARTITION BY source, commit_sha
+                           ) AS average_memory_percent,
+                           AVG(disk_percent) OVER (
+                               PARTITION BY source, commit_sha
+                           ) AS average_disk_percent,
                            ROW_NUMBER() OVER (
                                PARTITION BY source, commit_sha
                                ORDER BY timestamp DESC, id DESC
@@ -193,9 +212,15 @@ class MetricsStore:
         comparisons: list[dict[str, object]] = [
             {
                 "commit_sha": commit["commit_sha"],
+                "repository_name": commit["repository_name"],
                 "commit_message": commit["commit_message"],
                 "branch": commit["branch"],
                 "timestamp": commit["timestamp"],
+                "averages": {
+                    "cpu_percent": commit["average_cpu_percent"],
+                    "memory_percent": commit["average_memory_percent"],
+                    "disk_percent": commit["average_disk_percent"],
+                },
                 "current": commit,
                 "previous": commits[index + 1] if index + 1 < len(commits) else None,
             }

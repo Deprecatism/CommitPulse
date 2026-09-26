@@ -1,0 +1,26 @@
+---
+interface Props {
+    label: string;
+    metricId: string;
+}
+
+const { label, metricId } = Astro.props;
+---
+
+<div
+    data-motion='metric-card'
+    class='metric-card rounded-2xl border border-white/10 bg-zinc-900/80 p-3 transition duration-300 hover:-translate-y-1 hover:border-emerald-200/25 hover:bg-zinc-900'>
+    <p class='text-[10px] uppercase tracking-[0.18em] text-zinc-500'>
+        {label}
+    </p>
+    <div
+        id={`${metricId}-current`}
+        class='metric-value mt-2 text-2xl font-bold'>
+        --
+    </div>
+    <div
+        id={`${metricId}-previous`}
+        class='mt-1 text-xs text-zinc-400'>
+        previous --
+    </div>
+</div>

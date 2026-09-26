@@ -1,0 +1,90 @@
+---
+const metrics = [
+    { key: "cpu_percent", label: "CPU", color: "#6ee7b7" },
+    { key: "memory_percent", label: "Memory %", color: "#38bdf8" },
+    { key: "disk_percent", label: "Disk %", color: "#fbbf24" },
+    {
+        key: "download_speed_percent",
+        label: "Download speed (% peak)",
+        color: "#22d3ee",
+    },
+    {
+        key: "upload_speed_percent",
+        label: "Upload speed (% peak)",
+        color: "#818cf8",
+    },
+];
+---
+
+<div class='mt-6 border-t border-white/10 pt-5'>
+    <div
+        class='mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between'>
+        <div>
+            <p class='text-xs uppercase tracking-[0.22em] text-zinc-500'>
+                System timeline
+            </p>
+            <h2 class='mt-2 text-2xl font-semibold text-white'>
+                Metric history
+            </h2>
+        </div>
+        <p
+            id='trend-summary'
+            class='text-xs text-zinc-500'>
+            Waiting for samples
+        </p>
+    </div>
+
+    <div class='grid gap-5 lg:grid-cols-[190px_minmax(0,1fr)]'>
+        <fieldset class='min-w-0 lg:border-r lg:border-white/10 lg:pr-5'>
+            <legend
+                class='mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500'>
+                Series
+            </legend>
+            <div class='grid grid-cols-2 gap-x-4 gap-y-2 lg:grid-cols-1'>
+                {
+                    metrics.map((metric) => (
+                        <label class='flex min-w-0 cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-xs text-zinc-300 transition hover:bg-white/5'>
+                            <input
+                                type='checkbox'
+                                checked
+                                data-metric-toggle={metric.key}
+                                class='h-3.5 w-3.5 shrink-0 rounded accent-emerald-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200'
+                            />
+                            <span
+                                aria-hidden='true'
+                                class='h-2 w-2 shrink-0 rounded-full'
+                                style={`background-color: ${metric.color}`}
+                            />
+                            <span class='truncate'>{metric.label}</span>
+                        </label>
+                    ))
+                }
+            </div>
+        </fieldset>
+
+        <div class='min-w-0'>
+            <p
+                class='mb-2 text-[10px] uppercase tracking-[0.14em] text-zinc-600'>
+                Independent 0–100 trend scale · tooltips show actual values
+            </p>
+            <div
+                class='overflow-x-auto overscroll-x-contain pb-2'
+                role='region'
+                aria-label='Scrollable metrics graph'
+                tabindex='0'>
+                <div class='relative h-70 w-[1100px] sm:h-85 xl:w-[1300px]'>
+                    <canvas
+                        id='metrics-chart'
+                        role='img'
+                        aria-label='Time series chart of system performance metrics'
+                    ></canvas>
+                    <p
+                        id='metrics-chart-empty'
+                        class='absolute inset-0 hidden items-center justify-center text-sm text-zinc-500'>
+                        Waiting for metric samples
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

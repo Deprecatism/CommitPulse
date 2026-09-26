@@ -59,6 +59,12 @@ def current_commit_metadata() -> tuple[str, str, str | None]:
     )
 
 
+def current_repository_name() -> str | None:
+    override = os.getenv("METRICS_REPOSITORY_NAME")
+    repository_root = git_value("rev-parse", "--show-toplevel")
+    return override or (FilePath(repository_root).name if repository_root else None)
+
+
 def commits_in_current_repository(commit_shas: list[str]) -> set[str] | None:
     if not commit_shas:
         return set()
@@ -92,6 +98,7 @@ metrics_monitor = SystemMetricsMonitor(
     interval_seconds=metrics_interval_seconds,
     commit_metadata_provider=current_commit_metadata,
     on_sample=broadcast_local_sample,
+    repository_name=current_repository_name(),
 )
 
 

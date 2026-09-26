@@ -1,55 +1,22 @@
 ---
+import CommitComparisonCard from "./CommitComparisonCard.astro";
+import DashboardHeader from "./DashboardHeader.astro";
+import MetricCard from "./MetricCard.astro";
+import MetricsTrendPanel from "./MetricsTrendPanel.astro";
+import RepositoryInfo from "./RepositoryInfo.astro";
+
 const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
 ---
 
 <main
     id='dashboard'
     data-api-base={apiBase}
-    class='min-h-screen bg-[#0a0a0a] px-4 py-6 text-white sm:px-6 lg:px-8'>
-    <div class='mx-auto max-w-7xl'>
-        <header
-            class='mb-8 rounded-3xl border border-white/10 bg-zinc-950/80 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.45)]'>
-            <div
-                class='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
-                <div class='flex items-center gap-3'>
-                    <div
-                        class='flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white text-lg font-black text-black'>
-                        CP
-                    </div>
-                    <div>
-                        <p
-                            class='text-[10px] font-semibold uppercase tracking-[0.32em] text-zinc-400'>
-                            CommitPulse
-                        </p>
-                        <h1 class='mt-1 text-xl font-semibold text-white'>
-                            Commit performance
-                        </h1>
-                    </div>
-                </div>
-                <div class='flex flex-wrap items-center gap-3'>
-                    <label
-                        for='system-select'
-                        class='text-xs uppercase tracking-[0.16em] text-zinc-400'
-                        >System</label
-                    >
-                    <select
-                        id='system-select'
-                        class='min-w-52 rounded-xl border border-white/10 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-zinc-500'>
-                        <option value=''>Waiting for reports</option>
-                    </select>
-                    <span
-                        id='connection-state'
-                        role='status'
-                        aria-live='polite'
-                        class='rounded-full border border-white/10 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300'
-                        >Connecting</span
-                    >
-                </div>
-            </div>
-        </header>
-
+    class='min-h-screen bg-[#0a0a0a] text-white'>
+    <DashboardHeader />
+    <div class='mx-auto max-w-7xl space-y-5 px-4 py-6 sm:px-6 lg:px-8'>
+        <RepositoryInfo />
         <section
-            class='mb-5 rounded-3xl border border-white/10 bg-zinc-950/80 p-5'>
+            class='dashboard-panel min-w-0 rounded-3xl border border-white/10 bg-zinc-950/80 p-5'>
             <div
                 class='mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
                 <div>
@@ -72,85 +39,32 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
                 </p>
             </div>
             <div class='grid gap-3 md:grid-cols-2 xl:grid-cols-5'>
-                <div
-                    class='rounded-2xl border border-white/10 bg-zinc-900/80 p-3'>
-                    <p
-                        class='text-[10px] uppercase tracking-[0.18em] text-zinc-500'>
-                        CPU
-                    </p><div
-                        id='cpu-current'
-                        class='mt-2 text-2xl font-bold'>
-                        --
-                    </div><div
-                        id='cpu-previous'
-                        class='mt-1 text-xs text-zinc-400'>
-                        previous --
-                    </div>
-                </div>
-                <div
-                    class='rounded-2xl border border-white/10 bg-zinc-900/80 p-3'>
-                    <p
-                        class='text-[10px] uppercase tracking-[0.18em] text-zinc-500'>
-                        Memory
-                    </p><div
-                        id='memory-current'
-                        class='mt-2 text-2xl font-bold'>
-                        --
-                    </div><div
-                        id='memory-previous'
-                        class='mt-1 text-xs text-zinc-400'>
-                        previous --
-                    </div>
-                </div>
-                <div
-                    class='rounded-2xl border border-white/10 bg-zinc-900/80 p-3'>
-                    <p
-                        class='text-[10px] uppercase tracking-[0.18em] text-zinc-500'>
-                        Disk
-                    </p><div
-                        id='disk-current'
-                        class='mt-2 text-2xl font-bold'>
-                        --
-                    </div><div
-                        id='disk-previous'
-                        class='mt-1 text-xs text-zinc-400'>
-                        previous --
-                    </div>
-                </div>
-                <div
-                    class='rounded-2xl border border-white/10 bg-zinc-900/80 p-3'>
-                    <p
-                        class='text-[10px] uppercase tracking-[0.18em] text-zinc-500'>
-                        Network total
-                    </p><div
-                        id='network-current'
-                        class='mt-2 text-2xl font-bold'>
-                        --
-                    </div><div
-                        id='network-previous'
-                        class='mt-1 text-xs text-zinc-400'>
-                        previous --
-                    </div>
-                </div>
-                <div
-                    class='rounded-2xl border border-white/10 bg-zinc-900/80 p-3'>
-                    <p
-                        class='text-[10px] uppercase tracking-[0.18em] text-zinc-500'>
-                        Uptime
-                    </p><div
-                        id='uptime-current'
-                        class='mt-2 text-2xl font-bold'>
-                        --
-                    </div><div
-                        id='uptime-previous'
-                        class='mt-1 text-xs text-zinc-400'>
-                        previous --
-                    </div>
-                </div>
+                <MetricCard
+                    label='CPU'
+                    metricId='cpu'
+                />
+                <MetricCard
+                    label='Memory'
+                    metricId='memory'
+                />
+                <MetricCard
+                    label='Disk'
+                    metricId='disk'
+                />
+                <MetricCard
+                    label='Network total'
+                    metricId='network'
+                />
+                <MetricCard
+                    label='Uptime'
+                    metricId='uptime'
+                />
             </div>
+            <MetricsTrendPanel />
         </section>
 
-        <section class='rounded-3xl border border-white/10 bg-zinc-950/80 p-5'>
+        <section
+            class='dashboard-panel rounded-3xl border border-white/10 bg-zinc-950/80 p-5'>
             <div class='mb-5'>
                 <p class='text-xs uppercase tracking-[0.22em] text-zinc-500'>
                     Commit comparison
@@ -167,287 +81,519 @@ const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
                     Waiting for commit-linked metrics.
                 </p>
             </div>
+            <CommitComparisonCard />
         </section>
     </div>
-</main>
 
-<script>
-    type MetricSnapshot = {
-        system_id: string;
-        source: "local" | "reported";
-        commit_sha: string;
-        commit_message: string;
-        branch: string | null;
-        timestamp: string;
-        cpu_percent: number;
-        memory_percent: number;
-        disk_percent: number;
-        network_sent_bytes: number;
-        network_received_bytes: number;
-        uptime_seconds: number;
-    };
-    type SystemEntry = {
-        system_id: string;
-        source: "local" | "reported";
-        last_reported_at: string;
-    };
-    type CommitComparison = {
-        commit_sha: string;
-        commit_message: string;
-        branch: string | null;
-        current: MetricSnapshot;
-        previous: MetricSnapshot | null;
-    };
-    type DashboardResponse = {
-        current: MetricSnapshot | null;
-        previous: MetricSnapshot | null;
-        commits: CommitComparison[];
-    };
+    <script>
+        import { animate, stagger } from "animejs";
+        import { MetricsGraph } from "../scripts/metrics-chart";
 
-    const root = document.getElementById("dashboard");
-    const systemSelect = document.getElementById(
-        "system-select",
-    ) as HTMLSelectElement;
-    const connectionState = document.getElementById("connection-state")!;
-    const apiBase =
-        root?.getAttribute("data-api-base") ||
-        `${window.location.protocol}//${window.location.hostname}:8000`;
+        type MetricSnapshot = {
+            id: number;
+            system_id: string;
+            repository_name?: string | null;
+            source: "local" | "reported";
+            commit_sha: string;
+            commit_message: string;
+            branch: string | null;
+            timestamp: string;
+            cpu_percent: number;
+            memory_percent: number;
+            memory_used_bytes: number;
+            memory_total_bytes: number;
+            disk_percent: number;
+            disk_used_bytes: number;
+            disk_total_bytes: number;
+            network_sent_bytes: number;
+            network_received_bytes: number;
+            uptime_seconds: number;
+        };
+        type MetricsHistoryResponse = {
+            history: MetricSnapshot[];
+        };
+        type SystemEntry = {
+            system_id: string;
+            source: "local" | "reported";
+            last_reported_at: string;
+        };
+        type CommitComparison = {
+            commit_sha: string;
+            commit_message: string;
+            branch: string | null;
+            current: MetricSnapshot;
+            previous: MetricSnapshot | null;
+            averages: {
+                cpu_percent: number;
+                memory_percent: number;
+                disk_percent: number;
+            };
+        };
+        type DashboardResponse = {
+            current: MetricSnapshot | null;
+            previous: MetricSnapshot | null;
+            commits: CommitComparison[];
+        };
 
-    const selectedSystem = (): { systemId: string; source: string } | null => {
-        const [systemId, source] = systemSelect.value.split("|");
-        return systemId && source ? { systemId, source } : null;
-    };
-    const setText = (id: string, value: string): void => {
-        const element = document.getElementById(id);
-        if (element) element.textContent = value;
-    };
-    const formatBytes = (value: number): string => {
-        if (value >= 1024 ** 3) return `${(value / 1024 ** 3).toFixed(1)} GB`;
-        if (value >= 1024 ** 2) return `${(value / 1024 ** 2).toFixed(1)} MB`;
-        if (value >= 1024) return `${(value / 1024).toFixed(1)} KB`;
-        return `${value.toFixed(0)} B`;
-    };
-    const formatUptime = (seconds: number): string =>
-        `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
-    const percentPrevious = (value: number, previous: number | null): string =>
-        previous === null ?
-            "previous unavailable"
-        :   `previous ${previous.toFixed(1)}% (${value - previous >= 0 ? "+" : ""}${(value - previous).toFixed(1)}%)`;
-    const bytePrevious = (value: number, previous: number | null): string =>
-        previous === null ?
-            "previous unavailable"
-        :   `previous ${formatBytes(previous)} (${value - previous >= 0 ? "+" : "-"}${formatBytes(Math.abs(value - previous))})`;
+        const root = document.getElementById("dashboard");
+        const systemSelect = document.getElementById(
+            "system-select",
+        ) as HTMLSelectElement;
+        const connectionState = document.getElementById("connection-state")!;
+        const connectionLabel = document.getElementById("connection-label")!;
+        const connectionIndicator = document.getElementById(
+            "connection-indicator",
+        )!;
+        const motionEnabled = !window.matchMedia(
+            "(prefers-reduced-motion: reduce)",
+        ).matches;
+        const metricsGraph = new MetricsGraph(
+            document.getElementById("metrics-chart") as HTMLCanvasElement,
+            document.getElementById("metrics-chart-empty")!,
+            document.getElementById("trend-summary")!,
+            document.querySelectorAll<HTMLInputElement>("[data-metric-toggle]"),
+            motionEnabled,
+        );
+        const apiBase =
+            root?.getAttribute("data-api-base") ||
+            `${window.location.protocol}//${window.location.hostname}:8000`;
+        const pendingSystemRefreshes = new Set<string>();
+        const pendingCommitRefreshes = new Set<string>();
+        let displayedCommitSha: string | null = null;
+        let reconnectDelayMs = 1000;
 
-    const renderComparisons = (commits: CommitComparison[]): void => {
-        const list = document.getElementById("commit-list")!;
-        if (commits.length === 0) {
-            const empty = document.createElement("p");
-            empty.className = "text-sm text-zinc-500";
-            empty.textContent = "No commit-linked reports for this system yet.";
-            list.replaceChildren(empty);
-            return;
+        if (motionEnabled) {
+            animate("header", {
+                opacity: [0, 1],
+                translateY: [-16, 0],
+                duration: 680,
+                ease: "out(4)",
+            });
+            animate(".dashboard-panel", {
+                opacity: [0, 1],
+                translateY: [22, 0],
+                delay: stagger(130, { start: 120 }),
+                duration: 720,
+                ease: "out(4)",
+            });
+            animate(".metric-card", {
+                opacity: [0, 1],
+                translateY: [14, 0],
+                scale: [0.97, 1],
+                delay: stagger(70, { start: 320 }),
+                duration: 600,
+                ease: "out(3)",
+            });
+            animate(".brand-mark", {
+                rotate: [-8, 0],
+                scale: [0.8, 1],
+                delay: 160,
+                duration: 580,
+                ease: "out(4)",
+            });
         }
-        const articles = commits.map(
-            ({ current, previous, commit_sha, commit_message, branch }) => {
-                const article = document.createElement("article");
-                article.className =
-                    "rounded-2xl border border-white/10 bg-black/30 p-4";
-                const header = document.createElement("div");
-                header.className =
-                    "flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between";
-                const details = document.createElement("div");
-                details.className = "min-w-0";
-                const sha = document.createElement("p");
-                sha.className =
-                    "text-[10px] uppercase tracking-[0.2em] text-zinc-500";
-                sha.textContent = commit_sha;
-                const message = document.createElement("h3");
-                message.className = "mt-1 text-base font-semibold text-white";
-                message.textContent = commit_message;
-                const meta = document.createElement("p");
-                meta.className = "mt-1 text-xs text-zinc-500";
-                meta.textContent = `${branch || "branch unknown"} · ${new Date(current.timestamp).toLocaleString()}`;
-                details.append(sha, message, meta);
 
-                const badges = document.createElement("div");
-                badges.className = "flex flex-wrap items-center gap-2";
-                for (const [label, value, prior] of [
-                    ["CPU", current.cpu_percent, previous?.cpu_percent],
-                    ["MEM", current.memory_percent, previous?.memory_percent],
-                    ["DISK", current.disk_percent, previous?.disk_percent],
-                ] as const) {
-                    const badge = document.createElement("span");
-                    badge.className =
-                        "rounded-full border border-white/10 bg-zinc-900 px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] text-zinc-300";
-                    const change =
-                        prior === undefined ? "baseline" : (
-                            `${value - prior >= 0 ? "+" : ""}${(value - prior).toFixed(1)}%`
-                        );
-                    badge.textContent = `${label} ${change}`;
-                    badges.append(badge);
-                }
-                header.append(details, badges);
-                article.append(header);
-                return article;
-            },
-        );
-        list.replaceChildren(...articles);
-    };
+        const selectedSystem = (): {
+            systemId: string;
+            source: string;
+        } | null => {
+            const [systemId, source] = systemSelect.value.split("|");
+            return systemId && source ? { systemId, source } : null;
+        };
+        const setText = (id: string, value: string): void => {
+            const element = document.getElementById(id);
+            if (element) element.textContent = value;
+        };
+        const setConnectionState = (
+            state: "connecting" | "live" | "reconnecting" | "error",
+        ): void => {
+            const styles = {
+                connecting: {
+                    label: "Connecting",
+                    pill: "rounded-full border border-white/10 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300",
+                    indicator: "bg-zinc-400",
+                },
+                live: {
+                    label: "Live",
+                    pill: "rounded-full border border-emerald-200/20 bg-emerald-200/5 px-3 py-1.5 text-xs text-emerald-100",
+                    indicator: "bg-emerald-300 animate-live-indicator",
+                },
+                reconnecting: {
+                    label: "Reconnecting",
+                    pill: "rounded-full border border-amber-400/30 bg-amber-950/40 px-3 py-1.5 text-xs text-amber-200",
+                    indicator: "bg-amber-300 animate-live-indicator",
+                },
+                error: {
+                    label: "API unavailable",
+                    pill: "rounded-full border border-red-400/30 bg-red-950/50 px-3 py-1.5 text-xs text-red-200",
+                    indicator: "bg-red-300",
+                },
+            }[state];
+            connectionLabel.textContent = styles.label;
+            connectionState.className = styles.pill;
+            connectionIndicator.className = `mr-2 inline-block h-2 w-2 rounded-full ${styles.indicator}`;
+        };
+        const formatBytes = (value: number): string => {
+            if (value >= 1024 ** 3)
+                return `${(value / 1024 ** 3).toFixed(1)} GB`;
+            if (value >= 1024 ** 2)
+                return `${(value / 1024 ** 2).toFixed(1)} MB`;
+            if (value >= 1024) return `${(value / 1024).toFixed(1)} KB`;
+            return `${value.toFixed(0)} B`;
+        };
+        const formatUptime = (seconds: number): string =>
+            `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
+        const percentPrevious = (
+            value: number,
+            previous: number | null,
+        ): string =>
+            previous === null ?
+                "previous unavailable"
+            :   `previous ${previous.toFixed(1)}% (${value - previous >= 0 ? "+" : ""}${(value - previous).toFixed(1)}%)`;
+        const bytePrevious = (
+            value: number,
+            previous: number | null,
+        ): string =>
+            previous === null ?
+                "previous unavailable"
+            :   `previous ${formatBytes(previous)} (${value - previous >= 0 ? "+" : "-"}${formatBytes(Math.abs(value - previous))})`;
 
-    const renderDashboard = (data: DashboardResponse): void => {
-        const { current, previous } = data;
-        if (!current) {
-            setText("commit-context", "Waiting for a system report");
-            setText("snapshot-time", "");
-            for (const metric of ["cpu", "memory", "disk", "network", "uptime"])
-                setText(`${metric}-current`, "--");
-            renderComparisons([]);
-            return;
-        }
-        const network =
-            current.network_sent_bytes + current.network_received_bytes;
-        const previousNetwork =
-            previous ?
-                previous.network_sent_bytes + previous.network_received_bytes
-            :   null;
-        setText(
-            "commit-context",
-            `${current.commit_message} · ${current.commit_sha}`,
-        );
-        setText(
-            "snapshot-time",
-            `Updated ${new Date(current.timestamp).toLocaleString()}`,
-        );
-        setText("cpu-current", `${current.cpu_percent.toFixed(1)}%`);
-        setText(
-            "cpu-previous",
-            percentPrevious(current.cpu_percent, previous?.cpu_percent ?? null),
-        );
-        setText("memory-current", `${current.memory_percent.toFixed(1)}%`);
-        setText(
-            "memory-previous",
-            percentPrevious(
-                current.memory_percent,
-                previous?.memory_percent ?? null,
-            ),
-        );
-        setText("disk-current", `${current.disk_percent.toFixed(1)}%`);
-        setText(
-            "disk-previous",
-            percentPrevious(
-                current.disk_percent,
-                previous?.disk_percent ?? null,
-            ),
-        );
-        setText("network-current", formatBytes(network));
-        setText("network-previous", bytePrevious(network, previousNetwork));
-        setText("uptime-current", formatUptime(current.uptime_seconds));
-        setText(
-            "uptime-previous",
-            previous ?
-                `previous ${formatUptime(previous.uptime_seconds)}`
-            :   "previous unavailable",
-        );
-        renderComparisons(data.commits);
-    };
-
-    const refreshDashboard = async (): Promise<void> => {
-        const selected = selectedSystem();
-        if (!selected) return;
-        const query = new URLSearchParams({
-            source: selected.source,
-            limit: "25",
-        });
-        const response = await fetch(
-            `${apiBase}/api/systems/${encodeURIComponent(selected.systemId)}/dashboard?${query}`,
-        );
-        if (!response.ok)
-            throw new Error(`Dashboard request failed (${response.status})`);
-        renderDashboard((await response.json()) as DashboardResponse);
-    };
-
-    const refreshSystems = async (preferredKey?: string): Promise<void> => {
-        const oldValue = systemSelect.value;
-        const response = await fetch(`${apiBase}/api/systems`);
-        if (!response.ok)
-            throw new Error(`Systems request failed (${response.status})`);
-        const systems = (await response.json()) as SystemEntry[];
-        systems.sort(
-            (left, right) =>
-                Date.parse(right.last_reported_at) -
-                Date.parse(left.last_reported_at),
-        );
-        const options = systems.map((system) => {
-            const option = document.createElement("option");
-            option.value = `${system.system_id}|${system.source}`;
-            option.textContent = `${system.system_id} · ${system.source}`;
-            return option;
-        });
-        if (options.length === 0) {
-            const empty = document.createElement("option");
-            empty.value = "";
-            empty.textContent = "Waiting for reports";
-            options.push(empty);
-        }
-        systemSelect.replaceChildren(...options);
-        systemSelect.value =
-            options.some((option) => option.value === preferredKey) ?
-                preferredKey!
-            : options.some((option) => option.value === oldValue) ? oldValue
-            : options[0].value;
-        await refreshDashboard();
-    };
-
-    function showConnectionError(error: unknown): void {
-        connectionState.textContent = "API unavailable";
-        connectionState.className =
-            "rounded-full border border-red-400/30 bg-red-950/50 px-3 py-1.5 text-xs text-red-200";
-        console.error(error);
-    }
-
-    systemSelect.addEventListener(
-        "change",
-        () => void refreshDashboard().catch(showConnectionError),
-    );
-    const connectLive = (): void => {
-        connectionState.textContent = "Connecting";
-        const socketUrl = new URL("/api/live", apiBase);
-        socketUrl.protocol = socketUrl.protocol === "https:" ? "wss:" : "ws:";
-        const socket = new WebSocket(socketUrl);
-        socket.addEventListener("open", () => {
-            connectionState.textContent = "Live";
-            connectionState.className =
-                "rounded-full border border-emerald-400/30 bg-emerald-950/40 px-3 py-1.5 text-xs text-emerald-200";
-        });
-        socket.addEventListener("message", (message) => {
-            try {
-                const event = JSON.parse(message.data) as {
-                    type: string;
-                    data?: MetricSnapshot;
-                };
-                if (event.type !== "metrics.updated" || !event.data) return;
-                const selected = selectedSystem();
-                const eventKey = `${event.data.system_id}|${event.data.source}`;
-                const currentKey =
-                    selected ? `${selected.systemId}|${selected.source}` : "";
-                void refreshSystems(
-                    !currentKey || currentKey === eventKey ?
-                        eventKey
-                    :   undefined,
-                ).catch(showConnectionError);
-            } catch (error) {
-                console.error("Invalid live update", error);
+        const renderComparisons = (commits: CommitComparison[]): void => {
+            const list = document.getElementById("commit-list")!;
+            if (commits.length === 0) {
+                const empty = document.createElement("p");
+                empty.className = "text-sm text-zinc-500";
+                empty.textContent =
+                    "No commit-linked reports for this system yet.";
+                list.replaceChildren(empty);
+                return;
             }
-        });
-        socket.addEventListener("close", () => {
-            connectionState.textContent = "Reconnecting";
-            connectionState.className =
-                "rounded-full border border-amber-400/30 bg-amber-950/40 px-3 py-1.5 text-xs text-amber-200";
-            window.setTimeout(connectLive, 2000);
-        });
-        socket.addEventListener("error", () => socket.close());
-    };
+            const template = document.getElementById(
+                "commit-comparison-template",
+            ) as HTMLTemplateElement;
+            const cards = commits.map((comparison) => {
+                const card = template.content.cloneNode(
+                    true,
+                ) as DocumentFragment;
+                const setCardText = (selector: string, value: string): void => {
+                    const element = card.querySelector(selector);
+                    if (element) element.textContent = value;
+                };
+                const { current, previous } = comparison;
+                setCardText("[data-commit-sha]", comparison.commit_sha);
+                setCardText("[data-commit-message]", comparison.commit_message);
+                setCardText(
+                    "[data-commit-meta]",
+                    `${comparison.branch || "branch unknown"} · ${new Date(current.timestamp).toLocaleString()}`,
+                );
 
-    void refreshSystems().catch(showConnectionError);
-    connectLive();
-</script>
+                for (const [metric, label, value, prior, average] of [
+                    [
+                        "cpu",
+                        "CPU",
+                        current.cpu_percent,
+                        previous?.cpu_percent,
+                        comparison.averages.cpu_percent,
+                    ],
+                    [
+                        "memory",
+                        "MEM",
+                        current.memory_percent,
+                        previous?.memory_percent,
+                        comparison.averages.memory_percent,
+                    ],
+                    [
+                        "disk",
+                        "DISK",
+                        current.disk_percent,
+                        previous?.disk_percent,
+                        comparison.averages.disk_percent,
+                    ],
+                ] as const) {
+                    const change =
+                        prior === undefined ?
+                            `avg ${average.toFixed(1)}%`
+                        :   `${value - prior >= 0 ? "+" : ""}${(value - prior).toFixed(1)}%`;
+                    setCardText(
+                        `[data-delta='${metric}']`,
+                        `${label} ${change}`,
+                    );
+                }
+                return card;
+            });
+            list.replaceChildren(...cards);
+            if (motionEnabled) {
+                animate(list.querySelectorAll("article"), {
+                    opacity: [0, 1],
+                    translateY: [12, 0],
+                    delay: stagger(55),
+                    duration: 440,
+                    ease: "out(3)",
+                });
+            }
+        };
+
+        const renderLatestSnapshot = (current: MetricSnapshot): void => {
+            const network =
+                current.network_sent_bytes + current.network_received_bytes;
+            setText(
+                "commit-context",
+                `${current.commit_message} · ${current.commit_sha}`,
+            );
+            setText(
+                "repository-name",
+                current.repository_name || current.system_id,
+            );
+            setText(
+                "repository-source",
+                current.source === "local" ?
+                    "Local collector"
+                :   "External system",
+            );
+            setText(
+                "repository-branch",
+                current.branch || "Detached / unknown",
+            );
+            setText("repository-sha", current.commit_sha);
+            setText("repository-message", current.commit_message);
+            setText(
+                "snapshot-time",
+                `Updated ${new Date(current.timestamp).toLocaleString()}`,
+            );
+            setText("cpu-current", `${current.cpu_percent.toFixed(1)}%`);
+            setText("memory-current", `${current.memory_percent.toFixed(1)}%`);
+            setText("disk-current", `${current.disk_percent.toFixed(1)}%`);
+            setText("network-current", formatBytes(network));
+            setText("uptime-current", formatUptime(current.uptime_seconds));
+        };
+
+        const renderDashboard = (data: DashboardResponse): void => {
+            const { current, previous } = data;
+            if (!current) {
+                displayedCommitSha = null;
+                setText("commit-context", "Waiting for a system report");
+                setText("snapshot-time", "");
+                setText("repository-name", "Waiting for system data");
+                setText("repository-source", "--");
+                setText("repository-branch", "--");
+                setText("repository-sha", "--");
+                setText("repository-message", "Waiting for commit metadata");
+                for (const metric of [
+                    "cpu",
+                    "memory",
+                    "disk",
+                    "network",
+                    "uptime",
+                ])
+                    setText(`${metric}-current`, "--");
+                renderComparisons([]);
+                return;
+            }
+
+            renderLatestSnapshot(current);
+            const network =
+                current.network_sent_bytes + current.network_received_bytes;
+            const previousNetwork =
+                previous ?
+                    previous.network_sent_bytes +
+                    previous.network_received_bytes
+                :   null;
+            setText(
+                "cpu-previous",
+                percentPrevious(
+                    current.cpu_percent,
+                    previous?.cpu_percent ?? null,
+                ),
+            );
+            setText(
+                "memory-previous",
+                percentPrevious(
+                    current.memory_percent,
+                    previous?.memory_percent ?? null,
+                ),
+            );
+            setText(
+                "disk-previous",
+                percentPrevious(
+                    current.disk_percent,
+                    previous?.disk_percent ?? null,
+                ),
+            );
+            setText("network-previous", bytePrevious(network, previousNetwork));
+            setText(
+                "uptime-previous",
+                previous ?
+                    `previous ${formatUptime(previous.uptime_seconds)}`
+                :   "previous unavailable",
+            );
+            displayedCommitSha = current.commit_sha;
+            renderComparisons(data.commits);
+        };
+
+        const refreshMetricsHistory = async (selected: {
+            systemId: string;
+            source: string;
+        }): Promise<void> => {
+            const query = new URLSearchParams({
+                source: selected.source,
+                limit: "120",
+            });
+            const response = await fetch(
+                `${apiBase}/api/systems/${encodeURIComponent(selected.systemId)}/metrics?${query}`,
+            );
+            if (!response.ok)
+                throw new Error(
+                    `Metrics history request failed (${response.status})`,
+                );
+            const data = (await response.json()) as MetricsHistoryResponse;
+            metricsGraph.setHistory(
+                data.history,
+                `${selected.systemId}|${selected.source}`,
+            );
+        };
+
+        const fetchDashboard = async (selected: {
+            systemId: string;
+            source: string;
+        }): Promise<DashboardResponse> => {
+            const query = new URLSearchParams({
+                source: selected.source,
+                limit: "25",
+            });
+            const response = await fetch(
+                `${apiBase}/api/systems/${encodeURIComponent(selected.systemId)}/dashboard?${query}`,
+            );
+            if (!response.ok)
+                throw new Error(
+                    `Dashboard request failed (${response.status})`,
+                );
+            return (await response.json()) as DashboardResponse;
+        };
+
+        const refreshDashboard = async (): Promise<void> => {
+            const selected = selectedSystem();
+            if (!selected) return;
+            renderDashboard(await fetchDashboard(selected));
+            await refreshMetricsHistory(selected);
+        };
+
+        const refreshCommitComparison = async (
+            selected: { systemId: string; source: string },
+            expectedCommitSha: string,
+        ): Promise<void> => {
+            const dashboard = await fetchDashboard(selected);
+            if (dashboard.current?.commit_sha !== expectedCommitSha) return;
+            renderDashboard(dashboard);
+        };
+
+        const refreshSystems = async (preferredKey?: string): Promise<void> => {
+            const oldValue = systemSelect.value;
+            const response = await fetch(`${apiBase}/api/systems`);
+            if (!response.ok)
+                throw new Error(`Systems request failed (${response.status})`);
+            const systems = (await response.json()) as SystemEntry[];
+            systems.sort(
+                (left, right) =>
+                    Date.parse(right.last_reported_at) -
+                    Date.parse(left.last_reported_at),
+            );
+            const options = systems.map((system) => {
+                const option = document.createElement("option");
+                option.value = `${system.system_id}|${system.source}`;
+                option.textContent = `${system.system_id} · ${system.source}`;
+                return option;
+            });
+            if (options.length === 0) {
+                const empty = document.createElement("option");
+                empty.value = "";
+                empty.textContent = "Waiting for reports";
+                options.push(empty);
+            }
+            systemSelect.replaceChildren(...options);
+            systemSelect.value =
+                options.some((option) => option.value === preferredKey) ?
+                    preferredKey!
+                : options.some((option) => option.value === oldValue) ? oldValue
+                : options[0].value;
+            await refreshDashboard();
+        };
+
+        function showConnectionError(error: unknown): void {
+            setConnectionState("error");
+            console.error(error);
+        }
+
+        systemSelect.addEventListener(
+            "change",
+            () => void refreshDashboard().catch(showConnectionError),
+        );
+        const connectLive = (): void => {
+            setConnectionState("connecting");
+            const socketUrl = new URL("/api/live", apiBase);
+            socketUrl.protocol =
+                socketUrl.protocol === "https:" ? "wss:" : "ws:";
+            const socket = new WebSocket(socketUrl);
+            socket.addEventListener("open", () => {
+                reconnectDelayMs = 1000;
+                setConnectionState("live");
+            });
+            socket.addEventListener("message", (message) => {
+                try {
+                    const event = JSON.parse(message.data) as {
+                        type: string;
+                        data?: MetricSnapshot;
+                    };
+                    if (event.type !== "metrics.updated" || !event.data) return;
+                    const selected = selectedSystem();
+                    const eventKey = `${event.data.system_id}|${event.data.source}`;
+                    const knownSystem = Array.from(systemSelect.options).some(
+                        (option) => option.value === eventKey,
+                    );
+                    if (!knownSystem) {
+                        if (pendingSystemRefreshes.has(eventKey)) return;
+                        pendingSystemRefreshes.add(eventKey);
+                        void refreshSystems(selected ? undefined : eventKey)
+                            .catch(showConnectionError)
+                            .finally(() =>
+                                pendingSystemRefreshes.delete(eventKey),
+                            );
+                        return;
+                    }
+
+                    if (
+                        !selected ||
+                        `${selected.systemId}|${selected.source}` !== eventKey
+                    )
+                        return;
+
+                    renderLatestSnapshot(event.data);
+                    metricsGraph.appendSample(event.data, eventKey);
+                    const commitSha = event.data.commit_sha;
+                    if (
+                        commitSha !== displayedCommitSha &&
+                        !pendingCommitRefreshes.has(commitSha)
+                    ) {
+                        pendingCommitRefreshes.add(commitSha);
+                        void refreshCommitComparison(selected, commitSha)
+                            .catch(showConnectionError)
+                            .finally(() =>
+                                pendingCommitRefreshes.delete(commitSha),
+                            );
+                    }
+                } catch (error) {
+                    console.error("Invalid live update", error);
+                }
+            });
+            socket.addEventListener("close", () => {
+                setConnectionState("reconnecting");
+                const delay = reconnectDelayMs;
+                reconnectDelayMs = Math.min(reconnectDelayMs * 2, 30000);
+                window.setTimeout(connectLive, delay);
+            });
+            socket.addEventListener("error", () => socket.close());
+        };
+
+        void refreshSystems().catch(showConnectionError);
+        connectLive();
+    </script>
+</main>

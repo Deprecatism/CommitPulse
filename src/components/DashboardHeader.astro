@@ -1,0 +1,44 @@
+<header class='border-b border-white/10 bg-[#111412]'>
+    <div
+        class='mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8'>
+        <div class='flex items-center gap-3'>
+            <div
+                class='brand-mark flex h-10 w-10 items-center justify-center rounded-lg border border-emerald-200/20 bg-emerald-200 text-sm font-black text-[#102016]'>
+                CP
+            </div>
+            <div>
+                <p
+                    class='text-[10px] font-semibold uppercase tracking-[0.24em] text-emerald-200/70'>
+                    CommitPulse / Live telemetry
+                </p>
+                <h1 class='mt-0.5 text-lg font-semibold text-white'>
+                    Commit performance
+                </h1>
+            </div>
+        </div>
+        <div class='flex flex-wrap items-center gap-3'>
+            <label
+                for='system-select'
+                class='text-[10px] font-medium uppercase tracking-[0.16em] text-zinc-500'>
+                System
+            </label>
+            <select
+                id='system-select'
+                class='min-w-52 rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-emerald-200/50'>
+                <option value=''>Waiting for reports</option>
+            </select>
+            <span
+                id='connection-state'
+                role='status'
+                aria-live='polite'
+                class='rounded-full border border-emerald-200/20 bg-emerald-200/5 px-3 py-1.5 text-xs text-emerald-100'>
+                <span
+                    id='connection-indicator'
+                    aria-hidden='true'
+                    class='mr-2 inline-block h-2 w-2 rounded-full bg-emerald-300 animate-live-indicator'
+                ></span>
+                <span id='connection-label'>Connecting</span>
+            </span>
+        </div>
+    </div>
+</header>
